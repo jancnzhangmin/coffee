@@ -1,0 +1,2 @@
+class Areaamount < ApplicationRecord
+end

@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  openid: MyString
+  unionid: MyString
+  nickname: MyString
+  up_id: 
+  lng: 9.99
+  lat: 9.99
+
+two:
+  openid: MyString
+  unionid: MyString
+  nickname: MyString
+  up_id: 
+  lng: 9.99
+  lat: 9.99

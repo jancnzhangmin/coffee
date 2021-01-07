@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  agentarea_id: 
+  begintime: 2020-12-02 17:29:36
+  endtime: 2020-12-02 17:29:36
+  amount: 1.5
+  paystatus: 1
+
+two:
+  agentarea_id: 
+  begintime: 2020-12-02 17:29:36
+  endtime: 2020-12-02 17:29:36
+  amount: 1.5
+  paystatus: 1

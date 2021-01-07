@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  province: 1.5
+  city: 1.5
+  district: 1.5
+
+two:
+  province: 1.5
+  city: 1.5
+  district: 1.5
