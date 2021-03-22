@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_06_002924) do
+ActiveRecord::Schema.define(version: 2021_03_19_012523) do
 
   create_table "admins", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "name"
@@ -43,6 +43,18 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.index ["agentarea_id"], name: "index_agentareausers_on_agentarea_id"
   end
 
+  create_table "agentlevels", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.float "profitratio"
+    t.bigint "corder"
+    t.integer "frontdisplay"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.float "rebate"
+    t.integer "isyearend"
+    t.string "businetype"
+  end
+
   create_table "areaamounts", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.float "province"
     t.float "city"
@@ -63,9 +75,20 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.bigint "product_id", null: false
   end
 
+  create_table "buycars", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "product_id"
+    t.bigint "user_id"
+    t.float "number"
+    t.float "price"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["product_id"], name: "index_buycars_on_product_id"
+    t.index ["user_id"], name: "index_buycars_on_user_id"
+  end
+
   create_table "contractdetails", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "contract_id"
-    t.string "contract"
+    t.string "contractimg"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["contract_id"], name: "index_contractdetails_on_contract_id"
@@ -75,7 +98,10 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.bigint "shop_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.bigint "user_id"
+    t.integer "status"
     t.index ["shop_id"], name: "index_contracts_on_shop_id"
+    t.index ["user_id"], name: "index_contracts_on_user_id"
   end
 
   create_table "evaluateimgs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -99,6 +125,23 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.index ["user_id"], name: "index_evaluates_on_user_id"
   end
 
+  create_table "examines", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "agentlevel_id"
+    t.bigint "user_id"
+    t.datetime "examinedate"
+    t.integer "checkexamine"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["agentlevel_id"], name: "index_examines_on_agentlevel_id"
+    t.index ["user_id"], name: "index_examines_on_user_id"
+  end
+
+  create_table "imgresources", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "img"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "incomes", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "user_id"
     t.float "amount"
@@ -107,6 +150,7 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.string "summary"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "profittype"
     t.index ["user_id"], name: "index_incomes_on_user_id"
   end
 
@@ -138,6 +182,12 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.integer "afterstatus"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "deliverstatus"
+    t.datetime "paytime"
+    t.datetime "receivetime"
+    t.datetime "evaluatetime"
+    t.float "amount"
+    t.float "profit"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -177,6 +227,7 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.text "content"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "ispublic"
   end
 
   create_table "productexplains_products", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -195,6 +246,7 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.string "cover"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.float "proprice"
   end
 
   create_table "receiveaddrs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -226,6 +278,28 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.string "appsecret"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.float "firstprofit"
+    t.float "secondprofit"
+  end
+
+  create_table "shopclas", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "shopclas_shops", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "shop_id", null: false
+    t.bigint "shopcla_id", null: false
+  end
+
+  create_table "shopimgs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "shop_id"
+    t.string "shopimg"
+    t.integer "iscover"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["shop_id"], name: "index_shopimgs_on_shop_id"
   end
 
   create_table "shops", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -239,11 +313,24 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.string "adcode"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "aliasname"
+    t.float "buysum"
+    t.datetime "lastbuytime"
   end
 
   create_table "shops_users", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "shop_id", null: false
     t.bigint "user_id", null: false
+  end
+
+  create_table "shopusers", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "shop_id"
+    t.bigint "user_id"
+    t.integer "member"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["shop_id"], name: "index_shopusers_on_shop_id"
+    t.index ["user_id"], name: "index_shopusers_on_user_id"
   end
 
   create_table "showparams", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -265,6 +352,8 @@ ActiveRecord::Schema.define(version: 2020_12_06_002924) do
     t.decimal "lat", precision: 15, scale: 12
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "token"
+    t.string "headurl"
     t.index ["up_id"], name: "index_users_on_up_id"
   end
 

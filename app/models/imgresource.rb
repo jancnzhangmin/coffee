@@ -1,0 +1,2 @@
+class Imgresource < ApplicationRecord
+end

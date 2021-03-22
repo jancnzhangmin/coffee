@@ -7,7 +7,7 @@ class Admin::SettingsController < ApplicationController
   def update
     setting = Setting.find(params[:id])
     data = JSON.parse(params[:data])
-    setting.update(appid: data["appid"], appsecret: data["appsecret"])
+    setting.update(appid: data["appid"], appsecret: data["appsecret"], firstprofit: data["firstprofit"], secondprofit: data["secondprofit"])
     return_res('')
   end
 end

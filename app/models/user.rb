@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  has_and_belongs_to_many :shops
+  acts_as_mappable
   has_many :agentareausers
   has_many :agentareas, through: :agentareausers
   has_many :childrens, class_name: "User", foreign_key: "up_id"
@@ -8,4 +8,19 @@ class User < ApplicationRecord
   has_many :posters, dependent: :destroy
   has_many :orders
   has_many :evaluates, dependent: :destroy
+  has_many :buycars, dependent: :destroy
+  has_many :contracts
+  has_many :shopusers
+  has_many :examines, dependent: :destroy
+  has_many :incomes, dependent: :destroy
+
+  after_create :create_uuid
+
+  private
+  def create_uuid
+    if self.token.to_s.size == 0
+      self.token = UUIDTools::UUID.timestamp_create.to_s.tr('-','')
+      self.save
+    end
+  end
 end

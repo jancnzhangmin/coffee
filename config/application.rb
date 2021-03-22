@@ -23,7 +23,7 @@ module Coffee
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.0
-    config.serverurl = 'http://127.0.0.1:3000'
+    config.serverurl = 'http://192.168.50.114:3000'
     config.time_zone = 'Beijing'
     config.middleware.insert_before 0, Rack::Cors do
       allow do

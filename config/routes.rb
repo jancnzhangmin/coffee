@@ -22,6 +22,17 @@ Rails.application.routes.draw do
         post 'sort'
       end
     end
+    resources :imgresources
+    resources :changedomains
+    resources :orders
+    resources :productexplains
+    resources :agentlevels do
+      collection do
+        post 'sort'
+      end
+    end
+    resources :mytests
+    resources :profits
   end
 
   namespace :api do
@@ -31,5 +42,40 @@ Rails.application.routes.draw do
         get 'getproductlist'
       end
     end
+    resources :productlists do
+      collection do
+        get 'getproductclas'
+        get 'getproductlists'
+      end
+    end
+    resources :buycars
+    resources :users do
+      collection do
+        get 'getuserinfo'
+        get 'getaddrs'
+        get 'getaddr'
+        post 'createaddr'
+        post 'updateaddr'
+        delete 'deleteaddr'
+      end
+    end
+    resources :orders do
+      collection do
+        post 'createorder'
+        get 'getorders'
+      end
+    end
+    resources :shops
+    resources :contacts
+    resources :productdetails
+    resources :cooperstores
+    resources :cooperstoredetails do
+      collection do
+        get 'getdirectorlist'
+        post 'setdirector'
+      end
+    end
+    resources :teams
+    resources :stayincomes
   end
 end

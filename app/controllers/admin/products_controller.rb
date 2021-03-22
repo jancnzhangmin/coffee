@@ -17,6 +17,7 @@ class Admin::ProductsController < ApplicationController
           subname:product.subname,
           cost: ActiveSupport::NumberHelper.number_to_currency(product.cost, unit:''),
           price:ActiveSupport::NumberHelper.number_to_currency(product.price, unit:''),
+          proprice:ActiveSupport::NumberHelper.number_to_currency(product.proprice, unit:''),
           onsale: product.onsale.to_i,
           content: product.content,
           salecount: product.salecount.to_i,
@@ -42,6 +43,7 @@ class Admin::ProductsController < ApplicationController
         subname: data["subname"],
         cost: data["cost"],
         price: data["price"],
+        proprice: data["proprice"],
         onsale: onsale,
         content: data["content"],
         cover: data["cover"]
@@ -59,6 +61,7 @@ class Admin::ProductsController < ApplicationController
         subname: data["subname"],
         cost: data["cost"],
         price: data["price"],
+        proprice: data["proprice"],
         onsale: onsale,
         content: data["content"],
         cover: data["cover"]

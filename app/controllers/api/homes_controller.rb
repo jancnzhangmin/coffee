@@ -4,8 +4,10 @@ class Api::HomesController < ApplicationController
     bannerarr = []
     banners.each do |f|
       banner_param = {
-          id: f.id,
-          banner: f.banner
+          img: f.banner,
+          url: '',
+          title: '',
+          opentype: 'navigate'
       }
       bannerarr.push banner_param
     end
@@ -16,7 +18,7 @@ class Api::HomesController < ApplicationController
   end
 
   def getproductlist
-    products = Product.all
+    products = Product.where('onsale = ?', 1)
     productarr = []
     products.each do |f|
       product_param = {
@@ -24,7 +26,7 @@ class Api::HomesController < ApplicationController
           name: f.name,
           subname: f.subname,
           price: f.price,
-          cover: f.cover.to_s
+          img: f.cover.to_s
       }
       productarr.push product_param
     end
