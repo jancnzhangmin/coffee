@@ -128,7 +128,7 @@ class Backrun
     order.update(profit: profit)
   end
 
-  def self.cal_order_size(userid, ordersize = 0)
+  def self.cal_order_size(userid, ordersize = 0) #计算团队订单量
     user = User.find(userid)
     ordersize = user.orders.where('paystatus = ?', 1).size
     childrens = user.childrens
@@ -136,6 +136,40 @@ class Backrun
       ordersize += cal_order_size(f.id, ordersize)
     end
     ordersize
+  end
+
+  def self.cal_cycle_order_size(userid, begintime, endtime, ordersize = 0) #计算团队区间订单量
+    user = User.find(userid)
+    ordersize = user.orders.where('paystatus = ? and paytime between ? and ?', 1, begintime, endtime).size
+    childrens = user.childrens
+    childrens.each do |f|
+      ordersize += cal_cycle_order_size(f.id, begintime, endtime, ordersize)
+    end
+    ordersize
+  end
+
+  def self.judge_express(num) #识别快递公司
+    conn = Faraday.new(:url => 'http://www.kuaidi100.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:num] = num
+    conn.params[:key] = Setting.first.kuaidikey
+    request = conn.post do |req|
+      req.url '/autonumber/auto'
+    end
+    JSON.parse(request.body)
+  end
+
+  def self.cal_cycle_sale(userid, begintime, endtime, salecount = 0) #计算团队销售
+    user = User.find(userid)
+    salecount = user.orders.where('paystatus = ? and paytime between ? and ?', 1, begintime, endtime).sum('amount')
+    childrens = user.childrens
+    childrens.each do |f|
+      salecount += cal_cycle_sale(f.id, begintime, endtime, salecount)
+    end
+    salecount
   end
 
 end

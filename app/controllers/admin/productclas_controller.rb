@@ -17,7 +17,8 @@ class Admin::ProductclasController < ApplicationController
           name: productcla.name,
           ispro: productcla.ispro.to_i,
           number: productcla.products.size,
-          corder: productcla.corder
+          corder: productcla.corder,
+          keyword: productcla.keyword
       }
       productclaarr.push productcla_param
     end
@@ -34,7 +35,8 @@ class Admin::ProductclasController < ApplicationController
     ispro = 1 if data["ispro"]
     productcla = Productcla.create(
         name: data["name"],
-        ispro: ispro
+        ispro: ispro,
+        keyword: data["keyword"]
     )
     data["value"].each do |f|
       product = Product.find(f)
@@ -50,7 +52,8 @@ class Admin::ProductclasController < ApplicationController
     productcla = Productcla.find(params[:id])
     productcla.update(
         name: data["name"],
-        ispro: ispro
+        ispro: ispro,
+        keyword: data["keyword"]
     )
     productcla.products.destroy_all
     data["value"].each do |f|
@@ -66,7 +69,8 @@ class Admin::ProductclasController < ApplicationController
         id: productcla.id,
         name: productcla.name,
         ispro: productcla.ispro.to_i,
-        value: productcla.products.ids
+        value: productcla.products.ids,
+        keyword: productcla.keyword.to_s
     }
     return_res(param)
   end
@@ -108,6 +112,15 @@ class Admin::ProductclasController < ApplicationController
       productclas.last.update(corder: to_id)
     end
     return_res('')
+  end
+
+  def checkkeyword
+    status = true
+    productcla = Productcla.find_by_keyword(params[:keyword])
+    if params[:keyword].to_s.size != 0 && productcla
+      status = false
+    end
+    return_res(status)
   end
 
 end

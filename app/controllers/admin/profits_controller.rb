@@ -8,7 +8,11 @@ class Admin::ProfitsController < ApplicationController
     orders = Order.where('paystatus = ?', 1)
   end
   total = orders.size
+  allsalesum = orders.sum('amount').to_s(:currency,unit:'')
+  allprofitsum = orders.sum('profit').to_s(:currency,unit:'')
   orders = orders.page(params[:page]).per(params[:per])
+  salesum = Order.where(id:orders.ids).sum('amount').to_s(:currency,unit:'')
+  profitsum = Order.where(id:orders.ids).sum('profit').to_s(:currency, unit:'')
   orderarr = []
   orders.each do |f|
     state = '售后'
@@ -32,15 +36,21 @@ class Admin::ProfitsController < ApplicationController
         contactphone: f.contactphone,
         address: f.province.to_s + f.city.to_s + f.district.to_s + f.address.to_s,
         paytime: f.paytime.strftime('%Y-%m-%d %H:%M:%S'),
-        amount: ActiveSupport::NumberHelper.number_to_currency(f.amount, unit:''),
-        profit: ActiveSupport::NumberHelper.number_to_currency(f.profit, unit:''),
+        amount: f.amount.to_f.to_s(:currency,unit:''),
+        profit: f.profit.to_f.to_s(:currency, unit:''),
         state: state
     }
     orderarr.push order_param
   end
   param = {
       data: orderarr,
-      total: total
+      total: total,
+      datasum: {
+          allsalesum: allsalesum,
+          allprofitsum: allprofitsum,
+          salesum: salesum,
+          profitsum: profitsum
+      }
   }
   return_res(param)
   end

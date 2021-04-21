@@ -15,6 +15,7 @@ Rails.application.routes.draw do
       collection do
         get 'getproducts'
         post 'sort'
+        post 'checkkeyword'
       end
     end
     resources :banners do
@@ -24,7 +25,11 @@ Rails.application.routes.draw do
     end
     resources :imgresources
     resources :changedomains
-    resources :orders
+    resources :orders do
+      collection do
+        post 'judge_express'
+      end
+    end
     resources :productexplains
     resources :agentlevels do
       collection do
@@ -33,6 +38,21 @@ Rails.application.routes.draw do
     end
     resources :mytests
     resources :profits
+    resources :expresscodes
+    resources :publicmethods do
+      collection do
+        get 'get_today'
+        get 'get_yesterday'
+        get 'get_week'
+        get 'get_month'
+        get 'get_quarter'
+        get 'get_year'
+        get 'get_lastyear'
+        get 'get_nearday'
+        get 'get_nearweek'
+        get 'get_nearmonth'
+      end
+    end
   end
 
   namespace :api do
@@ -77,5 +97,13 @@ Rails.application.routes.draw do
     end
     resources :teams
     resources :stayincomes
+    resources :finances do
+      collection do
+        get 'get_financeing'
+        get 'get_financearea'
+        get 'get_financelist'
+      end
+    end
+    resources :claproducts
   end
 end

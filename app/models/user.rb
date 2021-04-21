@@ -13,6 +13,7 @@ class User < ApplicationRecord
   has_many :shopusers
   has_many :examines, dependent: :destroy
   has_many :incomes, dependent: :destroy
+  has_many :withdrawals, dependent: :destroy
 
   after_create :create_uuid
 

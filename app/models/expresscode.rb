@@ -1,0 +1,2 @@
+class Expresscode < ApplicationRecord
+end

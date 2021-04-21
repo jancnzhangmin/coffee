@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_19_012523) do
+ActiveRecord::Schema.define(version: 2021_03_30_063144) do
 
   create_table "admins", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "name"
@@ -136,6 +136,13 @@ ActiveRecord::Schema.define(version: 2021_03_19_012523) do
     t.index ["user_id"], name: "index_examines_on_user_id"
   end
 
+  create_table "expresscodes", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.string "comcode"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "imgresources", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "img"
     t.datetime "created_at", precision: 6, null: false
@@ -152,6 +159,17 @@ ActiveRecord::Schema.define(version: 2021_03_19_012523) do
     t.datetime "updated_at", precision: 6, null: false
     t.string "profittype"
     t.index ["user_id"], name: "index_incomes_on_user_id"
+  end
+
+  create_table "orderdelivers", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "order_id"
+    t.string "com"
+    t.string "nu"
+    t.text "cdata"
+    t.string "company"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["order_id"], name: "index_orderdelivers_on_order_id"
   end
 
   create_table "orderdetails", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -215,6 +233,7 @@ ActiveRecord::Schema.define(version: 2021_03_19_012523) do
     t.integer "ispro"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "keyword"
   end
 
   create_table "productclas_products", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -280,6 +299,7 @@ ActiveRecord::Schema.define(version: 2021_03_19_012523) do
     t.datetime "updated_at", precision: 6, null: false
     t.float "firstprofit"
     t.float "secondprofit"
+    t.string "kuaidikey"
   end
 
   create_table "shopclas", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -355,6 +375,15 @@ ActiveRecord::Schema.define(version: 2021_03_19_012523) do
     t.string "token"
     t.string "headurl"
     t.index ["up_id"], name: "index_users_on_up_id"
+  end
+
+  create_table "withdrawals", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "user_id"
+    t.float "amount"
+    t.integer "status"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_withdrawals_on_user_id"
   end
 
 end
