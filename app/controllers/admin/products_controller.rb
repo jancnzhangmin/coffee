@@ -23,7 +23,8 @@ class Admin::ProductsController < ApplicationController
           salecount: product.salecount.to_i,
           cover: product.cover,
           bannercount: product.productbanners.size,
-          showparamcount: product.showparams.size
+          showparamcount: product.showparams.size,
+          postercount: product.posters.size
       }
       productarr.push product_param
     end

@@ -1,0 +1,2 @@
+class Jobmonitor < ApplicationRecord
+end

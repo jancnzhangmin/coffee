@@ -9,6 +9,11 @@ Rails.application.routes.draw do
           post 'sort'
         end
       end
+      resources :posters do
+        collection do
+          post 'updatecontent'
+        end
+      end
     end
     resources :resources
     resources :productclas do
@@ -28,6 +33,7 @@ Rails.application.routes.draw do
     resources :orders do
       collection do
         post 'judge_express'
+        post 'deletedeliver'
       end
     end
     resources :productexplains
@@ -53,6 +59,19 @@ Rails.application.routes.draw do
         get 'get_nearmonth'
       end
     end
+    resources :users do
+      collection do
+        get 'getupuser'
+        post 'setupuser'
+      end
+    end
+    resources :shopfirsts do
+      collection do
+        get 'getproduct'
+      end
+      resources :shopfirstdetails
+    end
+
   end
 
   namespace :api do
@@ -85,8 +104,19 @@ Rails.application.routes.draw do
         get 'getorders'
       end
     end
-    resources :shops
-    resources :contacts
+    resources :shops do
+      collection do
+        get 'getcurrentshop'
+        post 'setdefault'
+        get 'getshopaddress'
+        post 'setshopaddress'
+      end
+    end
+    resources :contacts do
+      collection do
+        post 'checkrepeat'
+      end
+    end
     resources :productdetails
     resources :cooperstores
     resources :cooperstoredetails do
@@ -105,5 +135,23 @@ Rails.application.routes.draw do
       end
     end
     resources :claproducts
+    resources :logins do
+      collection do
+        post 'updateinfo'
+        post 'setlocation'
+      end
+    end
+    resources :posters
+    resources :shopoverviews
+    resources :shoporders
+    resources :incomes
+    resources :upgradeconditions
+    resources :wxquery do
+      collection do
+        post 'shopmanager'
+        post 'shopcustomer'
+        post 'upuser'
+      end
+    end
   end
 end

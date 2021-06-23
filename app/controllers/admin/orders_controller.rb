@@ -117,8 +117,87 @@ class Admin::OrdersController < ApplicationController
     return_res(param)
   end
 
+  def show
+    order = Order.find(params[:id])
+    state = '售后'
+    if order.afterstatus.to_i == 0 && order.paystatus == 0
+      state = '待付'
+    elsif order.afterstatus.to_i == 0 && order.paystatus == 1 && order.deliverstatus == 0
+      state = '待发'
+    elsif order.afterstatus.to_i == 0 && order.deliverstatus == 1 && order.receivestatus == 0
+      state = '待收'
+    elsif order.afterstatus.to_i == 0 && order.receivestatus == 1 && order.evaluatestatus == 0
+      state = '待评价'
+    elsif order.afterstatus.to_i == 0 && order.evaluatestatus == 0
+      state = '已完成'
+    end
+    order_param = {
+        ordernumber: order.ordernumber,
+        state: state,
+        paytime: order.paytime ? order.paytime.strftime('%Y-%m-%d %H:%M:%S') : '',
+        contact: order.contact,
+        contactphone: order.contactphone,
+        amount: order.amount.to_s(:currency,unit:''),
+        address: order.province.to_s + order.city.to_s + order.district.to_s + order.address.to_s,
+        summary: order.summary.to_s
+    }
+    orderarr= [
+        {value1:'订单编号', value2:order_param[:ordernumber], value3: '订单状态', value4: order_param[:state]},
+        {value1:'订单金额', value2:order_param[:amount], value3: '支付时间', value4: order_param[:paytime]},
+        {value1:'收货人', value2:order_param[:contact], value3: '收货电话', value4: order_param[:contactphone]},
+        {value1:'收货地址', value2:order_param[:address], value3: '', value4: ''},
+        {value1:'备注', value2:order_param[:summary], value3: '', value4: ''},
+    ]
+    orderdetails = order.orderdetails
+    orderdetailarr = []
+    orderdetails.each do |f|
+    orderdetail_param = {
+        product: f.product.name,
+        number: f.number,
+        price: f.price.to_s(:currency, unit:''),
+        pricesum: (f.number * f.price).to_s(:currency, unit: '')
+    }
+    orderdetailarr.push orderdetail_param
+    end
+    orderdelivers = order.orderdelivers
+    orderdeliverarr = []
+    orderdelivers.each do |f|
+      state = '未知'
+      if f.state.to_s.size > 0
+        state = '在途' if f.state.to_i == 0
+        state = '揽收' if f.state.to_i == 1
+        state = '疑难' if f.state.to_i == 2
+        state = '签收' if f.state.to_i == 3
+        state = '退签' if f.state.to_i == 4
+        state = '派件' if f.state.to_i == 5
+        state = '退回' if f.state.to_i == 6
+        state = '转投' if f.state.to_i == 7
+        state = '待清关' if f.state.to_i == 10
+        state = '清关中' if f.state.to_i == 11
+        state = '已清关' if f.state.to_i == 12
+        state = '清关异常' if f.state.to_i == 13
+        state = '拒签' if f.state.to_i == 14
+      end
+      orderdeliver_param = {
+          id: f.id,
+          nu: f.nu,
+          company: f.company,
+          cdata: f.cdata,
+          state: state
+      }
+      orderdeliverarr.push orderdeliver_param
+    end
+    param = {
+        order: orderarr,
+        orderdetails: orderdetailarr,
+        orderdelivers: orderdeliverarr
+    }
+    return_res(param)
+  end
+
   def judge_express
     nu = params[:nu]
+    nu.tr!('，', ' ')
     nu.tr!(',', ' ')
     num = nu.split(' ')
     num.uniq!
@@ -135,5 +214,12 @@ class Admin::OrdersController < ApplicationController
     res_name = order.orderdelivers.map(&:company)
     res_name.uniq!
     return_res(res_name.join(' '))
+  end
+
+  def deletedeliver
+    data = JSON.parse(params[:data])
+    orderdeliver = Orderdeliver.find(data["id"])
+    orderdeliver.destroy
+    return_res('')
   end
 end

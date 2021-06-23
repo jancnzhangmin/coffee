@@ -11,9 +11,9 @@ class Api::CooperstoredetailsController < ApplicationController
     lastbuytime = shop.lastbuytime.strftime('%Y-%m-%d') if shop.lastbuytime
     province = '未设置店铺地址'
     province = shop.province.to_s if shop.province.to_s.size > 0
-    lat = user.lat
+    lat = user.lat.to_f
     lat = shop.lat.to_f if shop.lat.to_f != 0
-    lng = user.lng
+    lng = user.lng.to_f
     lng = shop.lng.to_f if shop.lng.to_f != 0
     hasadd = 0
     hasadd = 1 if shop.lng.to_f != 0

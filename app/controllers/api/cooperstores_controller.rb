@@ -45,7 +45,7 @@ class Api::CooperstoresController < ApplicationController
           city: f.city.to_s,
           district: f.district.to_s,
           address: f.address.to_s,
-          buysum: ActiveSupport::NumberHelper.number_to_currency(f.buysum.to_f,unit:''),
+          buysum: f.buysum.to_f.to_s(:currency, unit:''),
           lastbuytime: lastbuytime,
           director: director
       }

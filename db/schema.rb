@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_30_063144) do
+ActiveRecord::Schema.define(version: 2021_06_23_073218) do
 
   create_table "admins", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "name"
@@ -82,6 +82,9 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.float "price"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.float "proprice"
+    t.integer "producttype"
+    t.string "activesummary"
     t.index ["product_id"], name: "index_buycars_on_product_id"
     t.index ["user_id"], name: "index_buycars_on_user_id"
   end
@@ -161,6 +164,13 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.index ["user_id"], name: "index_incomes_on_user_id"
   end
 
+  create_table "jobmonitors", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.string "param"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "orderdelivers", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "order_id"
     t.string "com"
@@ -169,6 +179,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.string "company"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "state"
     t.index ["order_id"], name: "index_orderdelivers_on_order_id"
   end
 
@@ -206,6 +217,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.datetime "evaluatetime"
     t.float "amount"
     t.float "profit"
+    t.bigint "shop_id"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -300,6 +312,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.float "firstprofit"
     t.float "secondprofit"
     t.string "kuaidikey"
+    t.string "qrcode"
   end
 
   create_table "shopclas", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -311,6 +324,27 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
   create_table "shopclas_shops", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "shop_id", null: false
     t.bigint "shopcla_id", null: false
+  end
+
+  create_table "shopfirstdetails", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "shopfirst_id"
+    t.bigint "buyproduct_id"
+    t.integer "buynumber"
+    t.bigint "giveproduct_id"
+    t.integer "givenumber"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["shopfirst_id"], name: "index_shopfirstdetails_on_shopfirst_id"
+  end
+
+  create_table "shopfirsts", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.datetime "begintime"
+    t.datetime "endtime"
+    t.integer "status"
+    t.string "summary"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "shopimgs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -336,6 +370,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.string "aliasname"
     t.float "buysum"
     t.datetime "lastbuytime"
+    t.string "license"
   end
 
   create_table "shops_users", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -374,6 +409,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_063144) do
     t.datetime "updated_at", precision: 6, null: false
     t.string "token"
     t.string "headurl"
+    t.bigint "shopdefaultid"
     t.index ["up_id"], name: "index_users_on_up_id"
   end
 

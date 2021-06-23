@@ -72,4 +72,10 @@ class Admin::BannersController < ApplicationController
     end
     return_res('')
   end
+
+  def destroy
+    banner = Banner.find(params[:id])
+    banner.destroy
+    return_res('')
+  end
 end

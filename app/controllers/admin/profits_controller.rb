@@ -5,7 +5,7 @@ class Admin::ProfitsController < ApplicationController
     order = 'desc' if params[:order] == 'descending'
     orders = Order.where('paystatus = ?', 1).order(Arel.sql("convert(#{params[:prop]} USING GBK) #{order}"))
   else
-    orders = Order.where('paystatus = ?', 1)
+    orders = Order.where('paystatus = ?', 1).order('paytime desc')
   end
   total = orders.size
   allsalesum = orders.sum('amount').to_s(:currency,unit:'')

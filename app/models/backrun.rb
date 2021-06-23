@@ -12,7 +12,14 @@ class Backrun
     else
       agentlevel = user.examines.last.agentlevel
       if agentlevel.businetype == 'man'
-        ordersize = cal_order_size(user.id)
+        #ordersize = cal_order_size(user.id)
+        ordersize = 0
+        childrens = user.childrens
+        childrens.each do |f|
+          if cal_upgrade_order_size(f.id)
+            ordersize += 1
+          end
+        end
         if ordersize > 14
           temagentlevel = Agentlevel.find_by_businetype('director')
           user.examines.create(agentlevel_id: temagentlevel.id, examinedate: Time.now + 6.months, checkexamine: 0)
@@ -59,6 +66,20 @@ class Backrun
     end
   end
 
+  def self.cal_upgrade_order_size(userid) #计算升级条件订单
+    user = User.find(userid)
+    ordersize = user.orders.where("paystatus = ? and paytime > ?", 1, Time.now - 6.month).size
+    if ordersize > 0
+      return true
+    else
+      childrens = user.childrens
+      childrens.each do |f|
+        cal_upgrade_order_size(f.id)
+      end
+      false
+    end
+  end
+
   def self.cal_distribute(orderid) #计算分销利润
     order = Order.find(orderid)
     user = order.user
@@ -76,42 +97,62 @@ class Backrun
     end
   end
 
-  def self.cal_teamprofit(orderid, userid = 0, amount = 0) #计算团队收入
+  def self.cal_teamprofit(orderid, userid = 0, amount = 0, amountsum = 0) #计算团队收入
     order = Order.find(orderid)
     user = order.user
+    orderuser = order.user
     user = User.find(userid) if userid != 0
     examine = user.examines.last
     agentlevel = examine.agentlevel
     temamount = order.amount.to_f * agentlevel.profitratio.to_f / 100
-    if temamount > amount
+    if temamount > amountsum && userid != 0
+      amountsum = temamount
       amount = temamount - amount
-      user.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: user.nickname.to_s + '团队收入',profittype: 'team')
+      user.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: orderuser.nickname.to_s + '团队收入',profittype: 'team')
     end
     parent = user.parent
     if parent
-      cal_teamprofit(orderid, parent.id, amount)
+      cal_teamprofit(orderid, parent.id, amount, amountsum)
     end
   end
 
-  def self.cal_rebate(orderid, userid = 0) #计算同级返点
+  def self.cal_rebate(orderid, currentuserid = 0, parentuserid = 0, agentlevelid = 0) #计算同级返点
     order = Order.find(orderid)
-    user = order.user
-    user = User.find(userid) if userid != 0
-    parent = user.parent
-    if parent
-      userexamine = user.examines.last
-      parentexamine = parent.examines.last
-      if userexamine && parentexamine
-        useragentlevel = userexamine.agentlevel
-        parentagentlevel = parentexamine.agentlevel
-        if parentagentlevel.corder == useragentlevel.corder
-          amount = order.amount.to_f * parentagentlevel.rebate.to_f / 100
-          if amount > 0
-            parent.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: user.nickname.to_s + '同级返点',profittype: 'rebate')
-          end
-        end
+    if agentlevelid == 0
+      currentuser = order.user
+      parentuser = currentuser.parent
+      agentlevel = currentuser.examines.last.agentlevel
+    else
+      agentlevel = Agentlevel.find(agentlevelid)
+      currentuser = User.find(currentuserid)
+      parentuser = User.find(parentuserid)
+    end
+
+    if currentuser && parentuser && currentuser.examines.last.agentlevel_id == agentlevel.id && parentuser.examines.last.agentlevel_id == agentlevel.id
+      amount = order.amount.to_f * agentlevel.rebate.to_f / 100
+      if amount > 0
+      parentuser.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: currentuser.nickname.to_s + '同级返点',profittype: 'rebate')
       end
-      cal_rebate(orderid, parent.id)
+      agentlevel = Agentlevel.where('corder > ?', agentlevel.corder).order('corder').first
+      currentuser = order.user
+      parentuser = currentuser.parent
+    else
+      parentuser = parentuser.parent
+    end
+
+    if !parentuser
+      currentuser = currentuser.parent
+      if  currentuser
+        parentuser = currentuser.parent
+      else
+        agentlevel = Agentlevel.where('corder > ?', agentlevel.corder).order('corder').first
+        currentuser = order.user
+        parentuser = currentuser.parent
+      end
+    end
+
+    if currentuser && parentuser && agentlevel
+      cal_rebate(orderid, currentuser.id, parentuser.id, agentlevel.id)
     end
   end
 
@@ -172,4 +213,38 @@ class Backrun
     salecount
   end
 
+  def self.cal_shoudan(userid, shoudan, chooseproprice, shopid)
+    if shoudan != 0 && chooseproprice != 0 && shopid != 0
+      user = User.find(userid)
+      buycars = user.buycars.where('producttype = ?', 0)
+      shopfirsts = Shopfirst.where('status = ? and begintime <= ? and endtime >= ?', 1, Time.now, Time.now)
+      shopfirsts.each do |shopfirst|
+        shopfirstdetails = shopfirst.shopfirstdetails
+        shopfirstdetails.each do |shopfirstdetail|
+          buycarproduct = buycars.find_by(product_id: shopfirstdetail.buyproduct_id)
+          if buycarproduct && buycarproduct.number >= shopfirstdetail.buynumber
+            giveproduct = Product.find(shopfirstdetail.giveproduct_id)
+            user.buycars.create(product_id: shopfirstdetail.giveproduct_id, number: (buycarproduct.number / shopfirstdetail.buynumber).to_i, price: giveproduct.price, proprice: 0, producttype: 1, activesummary: shopfirst.name)
+          end
+        end
+      end
+    end
+  end
+
+  def self.shop_buysum(orderid)
+    order = Order.find(orderid)
+    shop = Shop.find_by(id:order.shop_id)
+    if shop && order.shop_id.to_i != 0
+      buysum = Order.where(shop_id: shop.id, paystatus: 1).sum('amount')
+      shop.update(buysum: buysum, lastbuytime: order.paytime)
+    end
+  end
+
+  def self.payafter(orderid)
+    order = Order.find(orderid)
+    incomes = Income.where(ordernumber: order.ordernumber)
+    incomes.each do |f|
+      f.update(status: 1)
+    end
+  end
 end

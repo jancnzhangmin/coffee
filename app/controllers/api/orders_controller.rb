@@ -3,7 +3,10 @@ class Api::OrdersController < ApplicationController
     user = User.find_by_token(params[:token])
     buycars = user.buycars
     addr = Receiveaddr.find(params[:addr_id])
-
+    shop_id = 0
+    if params[:chooseproprice].to_i == 1
+      shop_id = params[:shop_id].to_i
+    end
     order = user.orders.create(
         ordernumber: Time.now.strftime("%Y%m%d") + user.id.to_s.rjust(5, '0') + Time.now.strftime("%H%M%S"),
         contact: addr.contact,
@@ -20,16 +23,26 @@ class Api::OrdersController < ApplicationController
         afterstatus: 0,
         summary: params[:summary],
         amount: 0,
-        profit: 0
+        profit: 0,
+        shop_id: shop_id
     )
     amount = 0
-    buycars.each do |f|
-      order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.price)
-      amount += f.number * f.price
+    if params[:chooseproprice].to_i == 1
+      buycars.each do |f|
+        order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.proprice)
+        amount += f.number * f.proprice
+      end
+    else
+      buycars.each do |f|
+        order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.price)
+        amount += f.number * f.price
+      end
     end
-    order.update(paystatus: 1, paytime: Time.now, amount: amount)
+    order.update(amount: amount)
     user.buycars.destroy_all
-    PayafterJob.perform_later(order.id)
+    #PayafterJob.perform_later(order.id)
+    #PaybeforeJob.perform_later(order.id)
+    development_payafter(order.id)
     return_api('')
   end
 
@@ -74,13 +87,18 @@ class Api::OrdersController < ApplicationController
         }
         orderdetailarr.push orderdetail_param
       end
+      shopname = ''
+      shop = Shop.find_by(id: order.shop_id)
+      if shop
+        shopname = shop.name
+      end
       order_param = {
           order_id: order.id,
           ordernumber: order.ordernumber,
           ordersum: order.amount,
           aftertype: order.afterstatus.to_i,
           orderdetails: orderdetailarr,
-
+          shop: shopname
       }
       orderarr.push order_param
     end
@@ -89,5 +107,14 @@ class Api::OrdersController < ApplicationController
         final: final
     }
     return_api(param)
+  end
+
+  private
+
+  def development_payafter(orderid)
+    order = Order.find(orderid)
+    order.update(paystatus: 1, paytime: Time.now)
+    PayafterJob.perform_later(order.id)
+    ReceiveafterJob.set(wait: 1.minutes).perform_later(orderid)
   end
 end

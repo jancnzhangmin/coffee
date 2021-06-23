@@ -26,12 +26,23 @@ class Api::ContactsController < ApplicationController
   def create
     user = User.find_by_token(params[:token])
     shopuser = user.shopusers.create(member: 0)
-    shop = Shop.create(name: params[:name])
+    shop = Shop.create(name: params[:name], license: params[:license])
     shopuser.update(shop_id: shop.id)
     contractdom = shop.contracts.create(user_id: user.id, status: 1)
     params[:imgs].each do |f|
       contractdom.contractdetails.create(contractimg: f)
     end
     return_api('')
+  end
+
+  def checkrepeat
+    status = 10000
+    msg = ''
+    shop = Shop.find_by_license(params[:license].lstrip.rstrip.upcase)
+    if shop
+      status = 10001
+      msg = '统一社会信用代码已存在'
+    end
+    return_api('', status, msg)
   end
 end

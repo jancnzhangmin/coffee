@@ -10,6 +10,25 @@ class Api::UsersController < ApplicationController
     ispro = 0
     shopusers = user.shopusers.where('member <> ?', 0)
     ispro = 1 if shopusers.size > 0
+    shopids = shopusers.map(&:shop_id)
+    shoudan = 0
+    shopids.each do |f|
+      orders = Order.where(shop_id:f)
+      if orders.size == 0
+        shoudan = 1
+        break
+      end
+    end
+    shopdefaultid = 0
+    defaultshop = Shop.where(id: shopusers.map(&:shop_id))
+    if defaultshop.size > 0
+      if user.shopdefaultid.to_i == 0
+        shopdefaultid = defaultshop.first.id
+        user.update(shopdefaultid: shopdefaultid)
+      else
+        shopdefaultid = user.shopdefaultid
+      end
+    end
     user_param = {
         id: user.id,
         openId: user.openid.to_s,
@@ -24,8 +43,10 @@ class Api::UsersController < ApplicationController
         ispro: ispro,
         businetype: businetype,
         stayincome: user.incomes.where('status = ?', 0).sum('amount').round(2),
-        income: 0.round(2),
-        canwithdraw: 0.round(2)
+        income: user.incomes.where('status = ?', 1).sum('amount').round(2),
+        canwithdraw: (user.incomes.where('status = ?', 1).sum('amount') - user.withdrawals.where(status: 1).sum('amount')).round(2),
+        shopdefaultid: shopdefaultid,
+        shoudan: shoudan,
     }
     receiveaddr = user.receiveaddrs.order('updated_at desc').first
     if receiveaddr

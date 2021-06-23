@@ -11,7 +11,8 @@ class Admin::SettingsController < ApplicationController
                    appsecret: data["appsecret"],
                    firstprofit: data["firstprofit"],
                    secondprofit: data["secondprofit"],
-                   kuaidikey: data["kuaidikey"]
+                   kuaidikey: data["kuaidikey"],
+                   qrcode: data["qrcode"]
                    )
     return_res('')
   end

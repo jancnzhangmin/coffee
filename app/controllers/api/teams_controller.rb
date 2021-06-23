@@ -10,14 +10,20 @@ class Api::TeamsController < ApplicationController
           id: f.id,
           headurl: f.headurl.to_s,
           nickname: f.nickname.to_s,
-          salesum: get_year_salesum(f.id),
+          salesum: get_year_salesum(f.id).to_s(:currency, unit:''),
           salecount: get_year_salecount(f.id),
-          peoplecount: get_peoplecount(f.id)
+          peoplecount: get_peoplecount(f.id),
+          mancount: get_businecount(f.id, f.id, 'man'),
+          directorcount: get_businecount(f.id, f.id, 'director'),
+          managercount: get_businecount(f.id, f.id,'manager')
       }
       userarr.push user_param
     end
     team_param = {
         peoplecount: get_peoplecount(user.id),
+        mancount: get_businecount(user.id, user.id, 'man'),
+        directorcount: get_businecount(user.id, user.id, 'director'),
+        managercount: get_businecount(user.id, user.id, 'manager')
     }
     param = {
         final: final,
@@ -58,4 +64,18 @@ class Api::TeamsController < ApplicationController
     end
     pcount
   end
+
+  def get_businecount(userid, selfid, businetype, pcount = 0)
+    user = User.find(userid)
+    agentlevel = Agentlevel.find_by_businetype(businetype)
+    if user.examines.last.agentlevel_id == agentlevel.id && userid != selfid
+      pcount = 1
+    end
+    childrens = user.childrens
+    childrens.each do |f|
+      pcount += get_businecount(f.id, selfid, businetype, pcount)
+    end
+    pcount
+  end
+
 end
