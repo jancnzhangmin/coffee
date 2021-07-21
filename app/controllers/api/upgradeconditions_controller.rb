@@ -16,18 +16,33 @@ class Api::UpgradeconditionsController < ApplicationController
       if nextagentlevel.businetype == 'director'
         upgradesit = '成单量 0单'
         upgradecondition = '签约15个酒店或15个部门完成下单'
-        directorcount = 0
+        ordercount = 0
         childrens.each do |f|
           if Backrun.cal_upgrade_order_size(f.id)
+            ordercount += 1
+          end
+        end
+        upgradesit = "成单量 #{ordercount}单"
+      elsif nextagentlevel.businetype == 'manager'
+        upgradesit = '0个业务主管'
+        upgradecondition = '3个业务主管'
+        directorcount = 0
+        childrens.each do |f|
+          if Backrun.cal_upgrade_character_size(f.id, 'director')
             directorcount += 1
           end
         end
-        upgradesit = "成单量 #{directorcount}单"
-      elsif nextagentlevel.businetype == 'manager'
-        upgradesit = '0个部门主任'
-        upgradecondition = '3个部门主任'
+        upgradesit = "#{directorcount}个业务主管"
       elsif nextagentlevel.businetype == 'partner'
-        upgradecondition = '3个部门经理'
+        upgradesit = '0个业务经理'
+        upgradecondition = '3个业务经理'
+        directorcount = 0
+        childrens.each do |f|
+          if Backrun.cal_upgrade_character_size(f.id, 'manager')
+            directorcount += 1
+          end
+        end
+        upgradesit = "#{directorcount}个业务经理"
       end
     end
     param = {

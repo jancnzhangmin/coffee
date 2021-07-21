@@ -15,7 +15,8 @@ class Api::TeamsController < ApplicationController
           peoplecount: get_peoplecount(f.id),
           mancount: get_businecount(f.id, f.id, 'man'),
           directorcount: get_businecount(f.id, f.id, 'director'),
-          managercount: get_businecount(f.id, f.id,'manager')
+          managercount: get_businecount(f.id, f.id,'manager'),
+          agentname: f.examines.last.agentlevel.name
       }
       userarr.push user_param
     end
@@ -70,6 +71,8 @@ class Api::TeamsController < ApplicationController
     agentlevel = Agentlevel.find_by_businetype(businetype)
     if user.examines.last.agentlevel_id == agentlevel.id && userid != selfid
       pcount = 1
+    else
+      pcount = 0
     end
     childrens = user.childrens
     childrens.each do |f|

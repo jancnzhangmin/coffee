@@ -22,13 +22,46 @@ class Api::ProductlistsController < ApplicationController
       price = f.price
       shopusers = user.shopusers.where('member <> ?', 0)
       price = f.proprice.to_f if shopusers.size > 0 && f.proprice.to_f > 0
+      buyparamarr = []
+      buyparams = f.buyparams.order('corder')
+      buyparams.each do |buyparam|
+        buyparamvaluearr = []
+        buyparamtagarr = []
+        buyparamvalues = buyparam.buyparamvalues.order('corder')
+        buyparamvalues.each do |buyparamvalue|
+          buyparamvalue_param = {
+              buyparamvalue_id: buyparamvalue.id,
+              name: buyparamvalue.name,
+              cover: buyparamvalue.cover,
+              cost: buyparamvalue.cost.to_f,
+              price: buyparamvalue.price.to_f,
+              checked: false
+          }
+          buyparamtag_param = {
+              id: buyparamvalue.id,
+              text: buyparamvalue.name,
+              checked: false,
+          }
+          buyparamtagarr.push buyparamtag_param
+          buyparamvaluearr.push buyparamvalue_param
+        end
+        buyparam_param = {
+            buyparam_id: buyparam.id,
+            param: buyparam.param,
+            buyparamvalues: buyparamvaluearr,
+            buyparamtags: buyparamtagarr
+        }
+        buyparamarr.push buyparam_param
+      end
       product_param = {
           id: f.id,
           name: f.name,
           price: price,
           cover: f.cover,
           number: 0,
-          priceMarket: f.price
+          priceMarket: f.price,
+          startnumber: f.startnumber.to_i,
+          buyparams: buyparamarr
       }
       productarr.push product_param
     end

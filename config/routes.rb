@@ -14,6 +14,16 @@ Rails.application.routes.draw do
           post 'updatecontent'
         end
       end
+      resources :buyparams do
+        collection do
+          post 'sort'
+        end
+        resources :buyparamvalues do
+          collection do
+            post 'sort'
+          end
+        end
+      end
     end
     resources :resources
     resources :productclas do
@@ -71,7 +81,12 @@ Rails.application.routes.draw do
       end
       resources :shopfirstdetails
     end
-
+    resources :contracttemplates
+    resources :hotsales do
+      collection do
+        post 'sort'
+      end
+    end
   end
 
   namespace :api do
@@ -79,6 +94,7 @@ Rails.application.routes.draw do
       collection do
         get 'getswiper'
         get 'getproductlist'
+        get 'gethotsales'
       end
     end
     resources :productlists do
@@ -102,6 +118,7 @@ Rails.application.routes.draw do
       collection do
         post 'createorder'
         get 'getorders'
+        post 'deleteorder'
       end
     end
     resources :shops do
@@ -110,11 +127,13 @@ Rails.application.routes.draw do
         post 'setdefault'
         get 'getshopaddress'
         post 'setshopaddress'
+        get 'get_shopqr'
       end
     end
     resources :contacts do
       collection do
         post 'checkrepeat'
+        post 'deletecontract'
       end
     end
     resources :productdetails
@@ -141,7 +160,11 @@ Rails.application.routes.draw do
         post 'setlocation'
       end
     end
-    resources :posters
+    resources :posters do
+      collection do
+        get 'getwxacodeunlimit'
+      end
+    end
     resources :shopoverviews
     resources :shoporders
     resources :incomes
@@ -153,5 +176,30 @@ Rails.application.routes.draw do
         post 'upuser'
       end
     end
+    resources :delivers do
+      collection do
+        post 'confirmdeliver'
+      end
+    end
+    resources :wxpay do
+      collection do
+        post 'prepay'
+        post 'wxpay_notify'
+      end
+    end
+    resources :evaluates
+    resources :coopersign do
+      collection do
+        post 'createcode'
+        get 'contractpreview'
+        post 'createsign'
+      end
+    end
   end
+  resources :polldeliver
+  resources :mytest
+  require 'sidekiq/web'
+  Sidekiq::Web.use ActionDispatch::Cookies
+  Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: "_interslice_session"
+  mount Sidekiq::Web => '/sidekiq'
 end

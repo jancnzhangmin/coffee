@@ -14,6 +14,11 @@ gem 'uuidtools'
 gem 'geokit-rails'
 gem "roo"
 gem 'faraday'
+gem 'sidekiq'
+gem 'redis-namespace'
+gem 'weixin_authorize'
+gem 'wx_pay'
+gem 'rmagick'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0.3', '>= 6.0.3.4'

@@ -22,6 +22,7 @@ Bundler.require(*Rails.groups)
 module Coffee
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
+    config.active_job.queue_adapter = :sidekiq
     config.load_defaults 6.0
     config.serverurl = 'http://192.168.50.90:3000'
     #config.serverurl = 'https://coffee.ysdsoft.com'

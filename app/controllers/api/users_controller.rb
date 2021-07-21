@@ -29,6 +29,9 @@ class Api::UsersController < ApplicationController
         shopdefaultid = user.shopdefaultid
       end
     end
+
+    draftuser = user.shopusers.where(member: 0)
+    contractdraftcount = Shop.where('id in (?) and created_at > ? and contractstatus = ?', draftuser.map(&:shop_id) + [0], Time.now - 1.days, 0).size
     user_param = {
         id: user.id,
         openId: user.openid.to_s,
@@ -36,7 +39,7 @@ class Api::UsersController < ApplicationController
         avatarUrl: user.headurl.to_s,
         token: user.token.to_s,
         addressSize: user.receiveaddrs.size,
-        paycount: user.orders.where('paystatus = ?', 0).size,
+        paycount: user.orders.where('paystatus = ? and created_at > ?', 0, Time.now - 1.hours).size,
         delivercount: user.orders.where('paystatus = ? and deliverstatus = ?', 1, 0).size,
         receivecount: user.orders.where('deliverstatus = ? and receivestatus = ?', 1, 0).size,
         evaluatecount: user.orders.where('receivestatus = ? and evaluatestatus = ?', 1, 0).size,
@@ -47,6 +50,7 @@ class Api::UsersController < ApplicationController
         canwithdraw: (user.incomes.where('status = ?', 1).sum('amount') - user.withdrawals.where(status: 1).sum('amount')).round(2),
         shopdefaultid: shopdefaultid,
         shoudan: shoudan,
+        contractdraftcount: contractdraftcount
     }
     receiveaddr = user.receiveaddrs.order('updated_at desc').first
     if receiveaddr

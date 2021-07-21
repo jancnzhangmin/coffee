@@ -10,7 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_06_23_073218) do
+ActiveRecord::Schema.define(version: 2021_07_20_102922) do
+
+  create_table "accesstokens", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "accesstoken"
+    t.integer "expiresin"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
 
   create_table "admins", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "name"
@@ -75,6 +82,19 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.bigint "product_id", null: false
   end
 
+  create_table "buycarparams", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "buycar_id"
+    t.string "buyparam"
+    t.bigint "buyparam_id"
+    t.string "buyparamvalue"
+    t.bigint "buyparamvalue_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["buycar_id"], name: "index_buycarparams_on_buycar_id"
+    t.index ["buyparam_id"], name: "index_buycarparams_on_buyparam_id"
+    t.index ["buyparamvalue_id"], name: "index_buycarparams_on_buyparamvalue_id"
+  end
+
   create_table "buycars", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "product_id"
     t.bigint "user_id"
@@ -85,8 +105,30 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.float "proprice"
     t.integer "producttype"
     t.string "activesummary"
+    t.string "cover"
     t.index ["product_id"], name: "index_buycars_on_product_id"
     t.index ["user_id"], name: "index_buycars_on_user_id"
+  end
+
+  create_table "buyparams", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "product_id"
+    t.string "param"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.bigint "corder"
+    t.index ["product_id"], name: "index_buyparams_on_product_id"
+  end
+
+  create_table "buyparamvalues", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "buyparam_id"
+    t.string "cover"
+    t.string "name"
+    t.float "price"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.bigint "corder"
+    t.float "cost"
+    t.index ["buyparam_id"], name: "index_buyparamvalues_on_buyparam_id"
   end
 
   create_table "contractdetails", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -107,6 +149,12 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.index ["user_id"], name: "index_contracts_on_user_id"
   end
 
+  create_table "contracttemplates", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "contracttemplate"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "evaluateimgs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "evaluate_id"
     t.string "evaluateimg"
@@ -116,7 +164,6 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
   end
 
   create_table "evaluates", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
-    t.bigint "product_id"
     t.bigint "user_id"
     t.float "speed"
     t.float "quality"
@@ -124,8 +171,14 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.integer "status"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["product_id"], name: "index_evaluates_on_product_id"
+    t.float "describe"
+    t.integer "systemstatus"
     t.index ["user_id"], name: "index_evaluates_on_user_id"
+  end
+
+  create_table "evaluates_products", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "evaluate_id", null: false
+    t.bigint "product_id", null: false
   end
 
   create_table "examines", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -144,6 +197,14 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.string "comcode"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "hotsales", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "product_id"
+    t.bigint "corder"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["product_id"], name: "index_hotsales_on_product_id"
   end
 
   create_table "imgresources", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -218,6 +279,7 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.float "amount"
     t.float "profit"
     t.bigint "shop_id"
+    t.datetime "delivertime"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -278,6 +340,8 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.float "proprice"
+    t.integer "pv"
+    t.integer "startnumber"
   end
 
   create_table "receiveaddrs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -313,6 +377,8 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.float "secondprofit"
     t.string "kuaidikey"
     t.string "qrcode"
+    t.integer "autoreceive"
+    t.integer "autoevaluate"
   end
 
   create_table "shopclas", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -371,6 +437,8 @@ ActiveRecord::Schema.define(version: 2021_06_23_073218) do
     t.float "buysum"
     t.datetime "lastbuytime"
     t.string "license"
+    t.string "contractnumber"
+    t.integer "contractstatus"
   end
 
   create_table "shops_users", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|

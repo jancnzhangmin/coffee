@@ -6,6 +6,8 @@ class Product < ApplicationRecord
   has_many :posters, dependent: :destroy
   has_and_belongs_to_many :banners
   has_many :orderdetails
-  has_many :evaluates, dependent: :destroy
+  has_and_belongs_to_many :evaluates
   has_many :buycars, dependent: :destroy
+  has_one :hotsale, dependent: :destroy
+  has_many :buyparams, dependent: :destroy
 end

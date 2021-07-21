@@ -22,4 +22,5 @@ class ApplicationController < ActionController::API
     }
     render json: param.to_json,content_type: "application/javascript"
   end
+
 end

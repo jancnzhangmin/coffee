@@ -6,6 +6,7 @@ class Api::CooperstoresController < ApplicationController
     corder = 'asc'
     corder = 'desc' if params[:ordervalue].to_i == 2
     shops = shops.where('name like ? or aliasname like ?',"%#{params[:searchkey]}%", "%#{params[:searchkey]}%")
+    shops = shops.where(contractstatus: 1)
     if params[:ordertype] == 'signedtime'
       shops = shops.order("created_at #{corder}")
     elsif params[:ordertype] == 'buy'

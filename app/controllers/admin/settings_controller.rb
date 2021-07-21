@@ -12,7 +12,9 @@ class Admin::SettingsController < ApplicationController
                    firstprofit: data["firstprofit"],
                    secondprofit: data["secondprofit"],
                    kuaidikey: data["kuaidikey"],
-                   qrcode: data["qrcode"]
+                   qrcode: data["qrcode"],
+                   autoreceive: data["autoreceive"],
+                   autoevaluate: data["autoevaluate"]
                    )
     return_res('')
   end

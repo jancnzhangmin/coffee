@@ -27,14 +27,9 @@ class Backrun
       elsif agentlevel.businetype == 'director'
         childrens = user.childrens
         lcount = 0
-        agentlevelcorder = agentlevel.corder
         childrens.each do |f|
-          examine = f.examines.last
-          if examine
-            temagentlevel = examine.agentlevel
-            if temagentlevel.corder >= agentlevelcorder
-              lcount += 1
-            end
+          if cal_upgrade_character_size(f.id, 'director')
+            lcount += 1
           end
         end
         if lcount > 2
@@ -44,14 +39,9 @@ class Backrun
       elsif agentlevel.businetype == 'manager'
         childrens = user.childrens
         lcount = 0
-        agentlevelcorder = agentlevel.corder
         childrens.each do |f|
-          examine = f.examines.last
-          if examine
-            temagentlevel = examine.agentlevel
-            if temagentlevel.corder >= agentlevelcorder
-              lcount += 1
-            end
+          if cal_upgrade_character_size(f.id, 'manager')
+            lcount += 1
           end
         end
         if lcount > 2
@@ -69,15 +59,38 @@ class Backrun
   def self.cal_upgrade_order_size(userid) #计算升级条件订单
     user = User.find(userid)
     ordersize = user.orders.where("paystatus = ? and paytime > ?", 1, Time.now - 6.month).size
+    res = false
     if ordersize > 0
-      return true
+      res = true
     else
       childrens = user.childrens
       childrens.each do |f|
-        cal_upgrade_order_size(f.id)
+        res ||= cal_upgrade_order_size(f.id)
       end
-      false
     end
+    res
+  end
+
+  def self.cal_upgrade_character_size(userid, character) #计算升级角色条件
+    user = User.find(userid)
+    agentlevel = user.examines.last.agentlevel
+    res = false
+    if agentlevel.businetype == character
+      res = true
+    else
+      childrens = user.childrens
+      childrens.each do |f|
+        res ||= cal_upgrade_character_size(f.id, character)
+      end
+    end
+    res
+  end
+
+  def self.fibo1(n)
+    if n==1 or n==2
+      return 1;
+    end
+    fibo1(n-1)
   end
 
   def self.cal_distribute(orderid) #计算分销利润
@@ -131,23 +144,26 @@ class Backrun
     if currentuser && parentuser && currentuser.examines.last.agentlevel_id == agentlevel.id && parentuser.examines.last.agentlevel_id == agentlevel.id
       amount = order.amount.to_f * agentlevel.rebate.to_f / 100
       if amount > 0
-      parentuser.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: currentuser.nickname.to_s + '同级返点',profittype: 'rebate')
+        parentuser.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: currentuser.nickname.to_s + '同级返点',profittype: 'rebate')
       end
       agentlevel = Agentlevel.where('corder > ?', agentlevel.corder).order('corder').first
       currentuser = order.user
       parentuser = currentuser.parent
     else
-      parentuser = parentuser.parent
+      if parentuser
+        parentuser = parentuser.parent
+      end
     end
 
     if !parentuser
       currentuser = currentuser.parent
       if  currentuser
         parentuser = currentuser.parent
-      else
-        agentlevel = Agentlevel.where('corder > ?', agentlevel.corder).order('corder').first
-        currentuser = order.user
-        parentuser = currentuser.parent
+        if !parentuser
+          agentlevel = Agentlevel.where('corder > ?', agentlevel.corder).order('corder').first
+          currentuser = order.user
+          parentuser = currentuser.parent
+        end
       end
     end
 
@@ -247,4 +263,35 @@ class Backrun
       f.update(status: 1)
     end
   end
+
+  def self.get_accesstoken
+    if !Accesstoken.first
+      accesstoken = refresh_accesstoken
+    elsif Accesstoken.first.created_at.to_i + Accesstoken.first.expiresin - 10 < Time.now.to_i
+      accesstoken = refresh_accesstoken
+    else
+      accesstoken = Accesstoken.first.accesstoken
+    end
+    accesstoken
+  end
+
+  def self.refresh_accesstoken
+    conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:grant_type] = 'client_credential'
+    conn.params[:appid] = Setting.first.appid
+    conn.params[:secret] = Setting.first.appsecret.to_s
+    request = conn.get do |req|
+      req.url '/cgi-bin/token'
+    end
+    data = JSON.parse(request.body)
+    Accesstoken.all.destroy_all
+    Accesstoken.create(accesstoken: data["access_token"], expiresin: data["expires_in"])
+    data["access_token"]
+  end
+
+
 end

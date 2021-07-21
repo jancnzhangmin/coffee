@@ -1,0 +1,2 @@
+class Contracttemplate < ApplicationRecord
+end

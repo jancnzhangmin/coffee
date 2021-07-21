@@ -207,10 +207,14 @@ class Admin::OrdersController < ApplicationController
         com = Backrun.judge_express(f)
         com = com[0]["comCode"]
         expresscode = Expresscode.find_by_comcode(com)
-        order.orderdelivers.create(com: expresscode.comcode, nu: f, company: expresscode.name)
+        orderdeliver = order.orderdelivers.create(com: expresscode.comcode, nu: f, company: expresscode.name)
+        get_deliverdetail(orderdeliver.id, expresscode.comcode, f)
+        poll_deliver(expresscode.comcode, f)
       end
     end
-    order.update(deliverstatus: 1)
+    order.update(deliverstatus: 1, delivertime: Time.now)
+    AutoreceiveJob.set(wait: Setting.first.autoreceive.days).perform_later(order.id)
+    AutoevaluateJob.set(wait: Setting.first.autoevaluate.days).perform_later(order.id)
     res_name = order.orderdelivers.map(&:company)
     res_name.uniq!
     return_res(res_name.join(' '))
@@ -221,5 +225,54 @@ class Admin::OrdersController < ApplicationController
     orderdeliver = Orderdeliver.find(data["id"])
     orderdeliver.destroy
     return_res('')
+  end
+
+  private
+
+  def get_deliverdetail(orderdeliverid, com, num)
+    pa = {
+        com: com,
+        num: num
+    }
+    sign =  Digest::MD5.hexdigest(pa.to_json +  'oWhaBhKc3008' + '33BF8AE418809366438B75CDD747B10B').upcase
+    conn = Faraday.new(:url => 'https://poll.kuaidi100.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:customer] = '33BF8AE418809366438B75CDD747B10B'
+    conn.params[:sign] = sign
+    conn.params[:param] = pa.to_json
+    request = conn.post do |req|
+      req.url '/poll/query.do'
+    end
+    od = JSON.parse(request.body)
+    begin
+      cdata = od["data"].to_json
+      orderdeliver = Orderdeliver.find(orderdeliverid)
+      orderdeliver.update(state: od["state"], cdata: cdata)
+    rescue
+    end
+  end
+
+  def poll_deliver(com, num)
+    pa = {
+        company: com,
+        number: num,
+        key: 'oWhaBhKc3008',
+        parameters:{
+            callbackurl: 'https://coffee.ysdsoft.com/polldeliver'
+        }
+    }
+    conn = Faraday.new(:url => 'https://poll.kuaidi100.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:schema] = 'json'
+    conn.params[:param] = pa.to_json
+    request = conn.post do |req|
+      req.url '/poll'
+    end
   end
 end

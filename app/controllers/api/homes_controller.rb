@@ -40,4 +40,31 @@ class Api::HomesController < ApplicationController
     }
     return_api(param)
   end
+
+  def gethotsales
+    user = User.find_by_token(params[:token])
+    hotsales = Hotsale.all.order('corder')
+    productarr = []
+    hotsales.each do |f|
+      product = f.product
+      if product && product.onsale == 1
+        price = product.price
+        shopusers = user.shopusers.where('member <> ?', 0)
+        price = product.proprice.to_f if shopusers.size > 0 && product.proprice.to_f > 0
+        product_param = {
+            id: product.id,
+            name: product.name,
+            subname: product.subname,
+            price: price,
+            img: product.cover.to_s,
+            priceMarket: product.price
+        }
+        productarr.push product_param
+      end
+    end
+    param = {
+        products: productarr
+    }
+    return_api(param)
+  end
 end

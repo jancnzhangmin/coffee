@@ -40,10 +40,13 @@ class Api::OrdersController < ApplicationController
     end
     order.update(amount: amount)
     user.buycars.destroy_all
-    #PayafterJob.perform_later(order.id)
-    #PaybeforeJob.perform_later(order.id)
-    development_payafter(order.id)
-    return_api('')
+
+    DeletestayorderJob.set(wait: 2.hours).perform_later(order.id)
+    #development_payafter(order.id)
+    param = {
+        order_id: order.id
+    }
+    return_api(param)
   end
 
   def getorders
@@ -69,6 +72,9 @@ class Api::OrdersController < ApplicationController
       collection.push 'afterstatus = 1'
     end
     orders = user.orders.where(collection.join(' or ')).order('id desc')
+    if params[:ordertype].include?('pay')
+      orders = orders.where('created_at > ?', Time.now - 1.hours)
+    end
     orderarr = []
     orders = orders.page(params[:page]).per(10)
     final = 0
@@ -92,13 +98,15 @@ class Api::OrdersController < ApplicationController
       if shop
         shopname = shop.name
       end
+      deletetxt = ((order.created_at + 1.hours - Time.now).to_i / 60 + 1).to_s + '分钟后自动删除'
       order_param = {
           order_id: order.id,
           ordernumber: order.ordernumber,
           ordersum: order.amount,
           aftertype: order.afterstatus.to_i,
           orderdetails: orderdetailarr,
-          shop: shopname
+          shop: shopname,
+          deletetxt: deletetxt
       }
       orderarr.push order_param
     end
@@ -109,11 +117,24 @@ class Api::OrdersController < ApplicationController
     return_api(param)
   end
 
+  def deleteorder
+    order = Order.find(params[:orderid])
+    if order.paystatus.to_i == 0
+      order.destroy
+    end
+    return_api('')
+  end
+
   private
 
   def development_payafter(orderid)
     order = Order.find(orderid)
     order.update(paystatus: 1, paytime: Time.now)
+    orderdetails = order.orderdetails
+    orderdetails.each do |orderdetail|
+      product = orderdetail.product
+      product.update(salecount: product.salecount.to_i + orderdetail.number)
+    end
     PayafterJob.perform_later(order.id)
     ReceiveafterJob.set(wait: 1.minutes).perform_later(orderid)
   end
