@@ -67,9 +67,19 @@ class Api::UsersController < ApplicationController
     else
       currentaddress = ''
     end
+    defaultinvoice = {}
+    invoicedef = user.invoicedefs.where(isdefault: 1).first
+    if invoicedef
+      defaultinvoice = {
+          id: invoicedef.id,
+          name: invoicedef.name,
+          invoicetype: invoicedef.invoicetype == 1 ? '增值税普通发票' : '增值税专用发票'
+      }
+    end
     param = {
         user: user_param,
-        currentaddress: currentaddress
+        currentaddress: currentaddress,
+        defaultinvoice: defaultinvoice
     }
     return_api(param)
   end

@@ -27,18 +27,42 @@ class Api::OrdersController < ApplicationController
         shop_id: shop_id
     )
     amount = 0
+    pa_amount = 0
     if params[:chooseproprice].to_i == 1
       buycars.each do |f|
-        order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.proprice)
+        orderdetail = order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.proprice)
+        f.buycarparams.each do |bp|
+          orderdetail.orderdetailparams.create(buyparam: bp.buyparam, buyparam_id: bp.buyparam_id, buyparamvalue: bp.buyparamvalue, buyparamvalue_id: bp.buyparamvalue_id)
+        end
         amount += f.number * f.proprice
       end
     else
       buycars.each do |f|
-        order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.price)
+        orderdetail = order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.price)
+        f.buyarparams.each do |bp|
+          orderdetail.orderdetailparams.create(buyparam: bp.buyparam, buyparam_id: bp.buyparam_id, buyparamvalue: bp.buyparamvalue, buyparamvalue_id: bp.buyparamvalue_id)
+        end
         amount += f.number * f.price
       end
     end
+
     order.update(amount: amount)
+    #发票
+    if params[:invoice_id] && params[:invoice_id].to_i != 0
+      invoicedef = Invoicedef.find(params[:invoice_id])
+      order.create_orderinvoice(
+          name: invoicedef.name,
+          duty: invoicedef.duty,
+          address: invoicedef.address,
+          tel: invoicedef.tel,
+          bank: invoicedef.bank,
+          account: invoicedef.account,
+          mail: invoicedef.mail,
+          invoicetype: invoicedef.invoicetype,
+          processed: 0
+      )
+    end
+    # 发票结束
     user.buycars.destroy_all
 
     DeletestayorderJob.set(wait: 2.hours).perform_later(order.id)
@@ -84,12 +108,20 @@ class Api::OrdersController < ApplicationController
       orderdetails = order.orderdetails
       orderdetails.each do |orderdetail|
         product = orderdetail.product
+        cover = product.cover
+        orderdetail.orderdetailparams.each do |op|
+          buyparamvalue = Buyparamvalue.find_by(id: op.buyparamvalue_id)
+          if buyparamvalue && buyparamvalue.cover.to_s.size > 0
+            cover = buyparamvalue.cover
+          end
+        end
         orderdetail_param = {
             orderdetail_id: orderdetail.id,
             name: product.name,
-            price: product.price,
+            price: orderdetail.price,
             number: orderdetail.number,
-            cover: product.cover
+            cover: cover,
+            buyparams: orderdetail.orderdetailparams.map{|n|n.buyparam + ' ' + n.buyparamvalue}.join(' ')
         }
         orderdetailarr.push orderdetail_param
       end

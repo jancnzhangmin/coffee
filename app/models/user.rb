@@ -14,6 +14,7 @@ class User < ApplicationRecord
   has_many :examines, dependent: :destroy
   has_many :incomes, dependent: :destroy
   has_many :withdrawals, dependent: :destroy
+  has_many :invoicedefs, dependent: :destroy
 
   after_create :create_uuid
 

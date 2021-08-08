@@ -40,6 +40,7 @@ class Api::BuycarsController < ApplicationController
         end
       end
       if productbuycars.size > 0
+        processbuycar = false
         productbuycars.each do |productbuycar|
           if productbuycar.product_id == product_id && productbuycar.buycarparams.map{|n|[n.buyparam_id, n.buyparamvalue_id]}.sort == buyparams.sort
             if params[:type] == 'sum'
@@ -47,19 +48,20 @@ class Api::BuycarsController < ApplicationController
             else
               productbuycar.update(number: number, price: product.price, proprice: proprice)
             end
-            break
-          else
-            buycar = user.buycars.create(number: number, product_id: product_id, price: price, proprice: proprice, producttype: 0)
-            buyparams.each do |bp|
-              buyparam = Buyparam.find_by(id: bp[0])
-              buyparamvalue = Buyparamvalue.find_by(id: bp[1])
-              if buyparam && buyparamvalue
-                buycar.buycarparams.create(buyparam: buyparam.param, buyparam_id: bp[0], buyparamvalue: buyparamvalue.name, buyparamvalue_id: bp[1])
-              end
-            end
-            changecover(buycar.id)
+            processbuycar = true
             break
           end
+        end
+        if !processbuycar
+          buycar = user.buycars.create(number: number, product_id: product_id, price: price, proprice: proprice, producttype: 0)
+          buyparams.each do |bp|
+            buyparam = Buyparam.find_by(id: bp[0])
+            buyparamvalue = Buyparamvalue.find_by(id: bp[1])
+            if buyparam && buyparamvalue
+              buycar.buycarparams.create(buyparam: buyparam.param, buyparam_id: bp[0], buyparamvalue: buyparamvalue.name, buyparamvalue_id: bp[1])
+            end
+          end
+          changecover(buycar.id)
         end
       else
         buycar = user.buycars.create(number: number, product_id: product_id, price: price, proprice: proprice, producttype: 0)

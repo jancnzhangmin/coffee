@@ -4,10 +4,11 @@ class PolldeliverController < ApplicationController
     orderdelivers = Orderdeliver.where('nu = ?',result["lastResult"]["nu"])
     orderdelivers.each do |orderdeliver|
       begin
-        orderdeliver.update(cdata: result['lastResult']['data'], state: result['lastResult']['state'])
+        orderdeliver.update(cdata: result['lastResult']['data'].to_json, state: result['lastResult']['state'])
         order = orderdeliver.order
         check_state(order.id)
       rescue
+        logger.info 'json出错了'
       end
     end
     render json: '{"result":true,"returnCode":"200","message":"接收成功"}'

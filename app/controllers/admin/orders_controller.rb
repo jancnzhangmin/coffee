@@ -74,15 +74,45 @@ class Admin::OrdersController < ApplicationController
       orderdetailarr = []
       orderdetails.each do |orderdetail|
         product = orderdetail.product
+        cover = product.cover
+        orderdetailparams = orderdetail.orderdetailparams
+        productname = product.name
+        if orderdetailparams.size > 0
+          productname += '('
+        end
+        orderdetailparams.each do |orderdetailparam|
+          productname += orderdetailparam.buyparam + ' ' + orderdetailparam.buyparamvalue + ' '
+          buyparamvalue = Buyparamvalue.find_by(id: orderdetailparam.buyparamvalue_id)
+          if buyparamvalue && buyparamvalue.cover.to_s.size > 0
+            cover = buyparamvalue.cover
+          end
+        end
+        if orderdetailparams.size > 0
+          if productname[-1,1] == ' '
+            productname.chop!
+          end
+          productname += ')'
+        end
         orderdetail_param = {
-            product: product.name,
-            cover: product.cover,
+            product: productname,
+            cover: cover,
             number: orderdetail.number,
-            price: orderdetail.price
+            price: orderdetail.price.to_s(:currency, unit:'')
         }
         orderdetailarr.push orderdetail_param
       end
-      order
+      #order
+      invoicestatus = 0
+      invoicetype = '增值税普通发票'
+      invoiceprocessed = 0
+      orderinvoice = order.orderinvoice
+      if orderinvoice
+        invoicestatus = 1
+        if orderinvoice.invoicetype == 2
+          invoicetype = '增值税专用发票'
+        end
+        invoiceprocessed = orderinvoice.processed
+      end
       order_param = {
           id: order.id,
           ordernumber: order.ordernumber,
@@ -96,7 +126,10 @@ class Admin::OrdersController < ApplicationController
           orderdetail: orderdetailarr,
           orderdetailcount: order.orderdetails.sum('number').to_i.to_s + ' 件商品',
           summary: order.summary,
-          delivercount: order.orderdelivers.size
+          delivercount: order.orderdelivers.size,
+          invoicestatus: invoicestatus,
+          invoicetype: invoicetype,
+          invoiceprocessed: invoiceprocessed
       }
       orderarr.push order_param
     end
@@ -187,10 +220,24 @@ class Admin::OrdersController < ApplicationController
       }
       orderdeliverarr.push orderdeliver_param
     end
+    invoicearr = []
+    orderinvoice = order.orderinvoice
+    processed = 0
+    if orderinvoice
+      invoicearr = [
+          {value1: '发票类型', value2: orderinvoice.invoicetype == 1 ? '增值税普通发票' : '增值税专用发票', value3: '抬头名称', value4: orderinvoice.name},
+          {value1: '税号', value2: orderinvoice.duty, value3: '单位地址', value4: orderinvoice.address},
+          {value1: '电话号码', value2: orderinvoice.tel, value3: '开户银行', value4: orderinvoice.bank},
+          {value1: '银行账号', value2: orderinvoice.account, value3: '接票邮箱', value4: orderinvoice.mail},
+      ]
+      processed = 1 if orderinvoice.processed == 1
+    end
     param = {
         order: orderarr,
         orderdetails: orderdetailarr,
-        orderdelivers: orderdeliverarr
+        orderdelivers: orderdeliverarr,
+        invoice: invoicearr,
+        processed: processed
     }
     return_res(param)
   end
@@ -224,6 +271,16 @@ class Admin::OrdersController < ApplicationController
     data = JSON.parse(params[:data])
     orderdeliver = Orderdeliver.find(data["id"])
     orderdeliver.destroy
+    return_res('')
+  end
+
+  def processinvoice
+    data = JSON.parse(params[:data])
+    order = Order.find(data["id"])
+    orderinvoice = order.orderinvoice
+    if orderinvoice
+      orderinvoice.update(processed: data["invoiceprocessed"])
+    end
     return_res('')
   end
 

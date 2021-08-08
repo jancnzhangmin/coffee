@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_20_102922) do
+ActiveRecord::Schema.define(version: 2021_08_07_082623) do
 
   create_table "accesstokens", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "accesstoken"
@@ -225,9 +225,34 @@ ActiveRecord::Schema.define(version: 2021_07_20_102922) do
     t.index ["user_id"], name: "index_incomes_on_user_id"
   end
 
+  create_table "invoicedefs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "name"
+    t.string "duty"
+    t.string "address"
+    t.string "tel"
+    t.string "bank"
+    t.string "account"
+    t.string "mail"
+    t.integer "invoicetype"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.integer "isdefault"
+    t.index ["user_id"], name: "index_invoicedefs_on_user_id"
+  end
+
   create_table "jobmonitors", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "name"
     t.string "param"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "mpusers", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.string "openid"
+    t.string "unionid"
+    t.string "nickname"
+    t.string "headurl"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
@@ -244,6 +269,17 @@ ActiveRecord::Schema.define(version: 2021_07_20_102922) do
     t.index ["order_id"], name: "index_orderdelivers_on_order_id"
   end
 
+  create_table "orderdetailparams", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "orderdetail_id"
+    t.string "buyparam"
+    t.bigint "buyparam_id"
+    t.string "buyparamvalue"
+    t.bigint "buyparamvalue_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["orderdetail_id"], name: "index_orderdetailparams_on_orderdetail_id"
+  end
+
   create_table "orderdetails", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.bigint "product_id"
     t.bigint "order_id"
@@ -253,6 +289,22 @@ ActiveRecord::Schema.define(version: 2021_07_20_102922) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["order_id"], name: "index_orderdetails_on_order_id"
     t.index ["product_id"], name: "index_orderdetails_on_product_id"
+  end
+
+  create_table "orderinvoices", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
+    t.bigint "order_id"
+    t.string "name"
+    t.string "duty"
+    t.string "address"
+    t.string "tel"
+    t.string "account"
+    t.string "mail"
+    t.integer "invoicetype"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.integer "processed"
+    t.string "bank"
+    t.index ["order_id"], name: "index_orderinvoices_on_order_id"
   end
 
   create_table "orders", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -366,6 +418,7 @@ ActiveRecord::Schema.define(version: 2021_07_20_102922) do
     t.string "resource_content_type"
     t.bigint "resource_file_size"
     t.datetime "resource_updated_at"
+    t.string "resourceurl"
   end
 
   create_table "settings", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
@@ -439,6 +492,7 @@ ActiveRecord::Schema.define(version: 2021_07_20_102922) do
     t.string "license"
     t.string "contractnumber"
     t.integer "contractstatus"
+    t.string "cover"
   end
 
   create_table "shops_users", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|

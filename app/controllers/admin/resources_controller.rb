@@ -5,6 +5,7 @@ class Admin::ResourcesController < ApplicationController
       if params[f].class == ActionDispatch::Http::UploadedFile
         resource = Resource.new(resource: params[f])
         resource.save
+        resource.update(resourceurl: Rails.configuration.serverurl + resource.resource.url)
         data.push Rails.configuration.serverurl + resource.resource.url
       end
     end

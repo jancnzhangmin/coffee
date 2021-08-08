@@ -20,8 +20,9 @@ class Api::LoginsController < ApplicationController
     else
       user = User.find_by_openid(data["openid"])
       if user
+        user.update(unionid: data["unionid"])
       else
-        user = User.create(openid: data["openid"])
+        user = User.create(openid: data["openid"], unionid: data["unionid"])
       end
       examine = user.examines.last
       if !examine
@@ -45,6 +46,25 @@ class Api::LoginsController < ApplicationController
   def setlocation
     user = User.find_by_token(params[:token])
     user.update(lng: params[:lng], lat: params[:lat])
-    return_api('')
+    location = getadcode(user.lat, user.lng)
+    return_api(location)
+  end
+
+  private
+
+  def getadcode(lat,lng)
+    conn = Faraday.new(:url => 'http://api.map.baidu.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:ak] = '9XW0meqlCG0LXuTpjW5Pv9I4H9qMCgWr'
+    conn.params[:output] = 'json'
+    conn.params[:coordtype] = 'wgs84ll'
+    conn.params[:location] = lat.to_s + ',' + lng.to_s
+    request = conn.post do |req|
+      req.url 'reverse_geocoding/v3/'
+    end
+    JSON.parse(request.body)
   end
 end

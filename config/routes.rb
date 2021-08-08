@@ -44,6 +44,7 @@ Rails.application.routes.draw do
       collection do
         post 'judge_express'
         post 'deletedeliver'
+        post 'processinvoice'
       end
     end
     resources :productexplains
@@ -85,6 +86,12 @@ Rails.application.routes.draw do
     resources :hotsales do
       collection do
         post 'sort'
+      end
+    end
+    resources :shops do
+      member do
+        get 'getcover'
+        post 'setcover'
       end
     end
   end
@@ -193,6 +200,24 @@ Rails.application.routes.draw do
         post 'createcode'
         get 'contractpreview'
         post 'createsign'
+      end
+    end
+    resources :shopsettinglist do
+      collection do
+        get 'getcover'
+        post 'setcover'
+        get 'getname'
+        post 'setname'
+      end
+    end
+    resources :shoplist
+    resources :invoicedefs do
+      collection do
+        post 'createinvoice'
+        post 'setdefault'
+        get 'getinvoice'
+        post 'updateinvoice'
+        post 'deleteinvoice'
       end
     end
   end

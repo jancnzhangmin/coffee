@@ -1,0 +1,2 @@
+class Mpuser < ApplicationRecord
+end
