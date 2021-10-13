@@ -10,4 +10,12 @@ class Product < ApplicationRecord
   has_many :buycars, dependent: :destroy
   has_one :hotsale, dependent: :destroy
   has_many :buyparams, dependent: :destroy
+  has_many :singlediscounts, dependent: :destroy
+
+  after_create :create_evaluate
+
+  private
+  def create_evaluate
+      self.update(speed: 5, quality: 5, describe: 5, comp: 5)
+  end
 end

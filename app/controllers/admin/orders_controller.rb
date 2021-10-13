@@ -129,7 +129,8 @@ class Admin::OrdersController < ApplicationController
           delivercount: order.orderdelivers.size,
           invoicestatus: invoicestatus,
           invoicetype: invoicetype,
-          invoiceprocessed: invoiceprocessed
+          invoiceprocessed: invoiceprocessed,
+          afterstatus: order.afterstatus.to_i
       }
       orderarr.push order_param
     end

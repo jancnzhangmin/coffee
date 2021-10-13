@@ -26,6 +26,7 @@ class Admin::ProductsController < ApplicationController
           showparamcount: product.showparams.size,
           postercount: product.posters.size,
           startnumber: product.startnumber.to_i,
+          retailstartnumber: product.retailstartnumber.to_i,
           buyparamcount: product.buyparams.size,
       }
       productarr.push product_param
@@ -50,7 +51,8 @@ class Admin::ProductsController < ApplicationController
         onsale: onsale,
         content: data["content"],
         cover: data["cover"],
-        startnumber: data["startnumber"]
+        startnumber: data["startnumber"],
+        retailstartnumber: data["retailstartnumber"]
     )
     return_res('')
   end
@@ -69,7 +71,8 @@ class Admin::ProductsController < ApplicationController
         onsale: onsale,
         content: data["content"],
         cover: data["cover"],
-        startnumber: data["startnumber"]
+        startnumber: data["startnumber"],
+        retailstartnumber: data["retailstartnumber"]
     )
     return_res('')
   end

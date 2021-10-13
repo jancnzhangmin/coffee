@@ -68,6 +68,7 @@ Rails.application.routes.draw do
         get 'get_nearday'
         get 'get_nearweek'
         get 'get_nearmonth'
+        get 'get_products'
       end
     end
     resources :users do
@@ -94,6 +95,20 @@ Rails.application.routes.draw do
         post 'setcover'
       end
     end
+    resources :lives
+    resources :singlediscounts
+    resources :withdrawals
+    resources :withdrawalrecords
+    resources :mpmaterials
+    resources :mpexplains do
+      collection do
+        post 'sort'
+      end
+    end
+    resources :aftersales
+    resources :buyfullactives do
+      resources :buyfullactivedetails
+    end
   end
 
   namespace :api do
@@ -102,6 +117,7 @@ Rails.application.routes.draw do
         get 'getswiper'
         get 'getproductlist'
         get 'gethotsales'
+        get 'get_live_status'
       end
     end
     resources :productlists do
@@ -181,6 +197,7 @@ Rails.application.routes.draw do
         post 'shopmanager'
         post 'shopcustomer'
         post 'upuser'
+        post 'liveupuser'
       end
     end
     resources :delivers do
@@ -220,9 +237,19 @@ Rails.application.routes.draw do
         post 'deleteinvoice'
       end
     end
+    resources :withdrawals
+    resources :mpexplains
+    resources :productsearch
+    resources :aftersales
+    resources :activelists
+    resources :activepagelists
   end
   resources :polldeliver
-  resources :mytest
+  resources :mytest do
+    collection do
+      get 'createuser'
+    end
+  end
   require 'sidekiq/web'
   Sidekiq::Web.use ActionDispatch::Cookies
   Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: "_interslice_session"

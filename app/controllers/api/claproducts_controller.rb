@@ -12,12 +12,16 @@ class Api::ClaproductsController < ApplicationController
     products.each do |f|
       price = f.price
       price = f.proprice.to_f if f.proprice.to_f > 0 && ispro == 1
+      buyfullactives = Buyfullactive.where('begintime <= ? and endtime >= ? and status = ? and product_id = ?', Time.now, Time.now, 1, f.id)
+      activetag = buyfullactives.map(&:nametag)
       product_param = {
           id: f.id,
           name: f.name.to_s,
           img: f.cover.to_s,
           price: price,
-          priceMarket: f.price
+          priceMarket: f.price,
+          proprice: f.proprice.to_f,
+          activetag: activetag
       }
       productarr.push product_param
     end

@@ -11,6 +11,7 @@ class AutoevaluateJob < ApplicationJob
       orderdetails.each do |f|
         product = f.product
         product.evaluates << evaluate
+        EvaluatesumJob.perform_later(product.id)
       end
     end
   end

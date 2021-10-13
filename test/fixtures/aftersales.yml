@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  order_id: 
+  contact: MyString
+  summary: MyString
+  reply: MyString
+
+two:
+  order_id: 
+  contact: MyString
+  summary: MyString
+  reply: MyString

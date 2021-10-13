@@ -1,0 +1,2 @@
+class Mpaccesstoken < ApplicationRecord
+end

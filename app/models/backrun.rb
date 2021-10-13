@@ -13,46 +13,70 @@ class Backrun
       agentlevel = user.examines.last.agentlevel
       if agentlevel.businetype == 'man'
         #ordersize = cal_order_size(user.id)
-        ordersize = 0
-        childrens = user.childrens
-        childrens.each do |f|
-          if cal_upgrade_order_size(f.id)
-            ordersize += 1
-          end
-        end
+        # ordersize = 0
+        # childrens = user.childrens
+        # childrens.each do |f|
+        #   if cal_upgrade_order_size(f.id)
+        #     ordersize += 1
+        #   end
+        # end
+        ordersize = Order.where('paytime between ? and ? and id in(?)', Time.now - 6.month, Time.now, user.teamorderids.map(&:order_id) - user.orders.ids + [0]).size
         if ordersize > 14
           temagentlevel = Agentlevel.find_by_businetype('director')
           user.examines.create(agentlevel_id: temagentlevel.id, examinedate: Time.now + 6.months, checkexamine: 0)
-        end
-      elsif agentlevel.businetype == 'director'
-        childrens = user.childrens
-        lcount = 0
-        childrens.each do |f|
-          if cal_upgrade_character_size(f.id, 'director')
-            lcount += 1
+          parent = user.parent
+          if parent
+            parent.update(mancount: parent.mancount.to_i - 1, directorcount: parent.directorcount.to_i + 1)
           end
         end
+      elsif agentlevel.businetype == 'director'
+        # childrens = user.childrens
+        # lcount = 0
+        # childrens.each do |f|
+        #   if cal_upgrade_character_size(f.id, 'director')
+        #     lcount += 1
+        #   end
+        # end
+        lcount = user.directorcount.to_i
         if lcount > 2
           temagentlevel = Agentlevel.find_by_businetype('manager')
           user.examines.create(agentlevel_id: temagentlevel.id, examinedate: Time.now + 6.months, checkexamine: 0)
-        end
-      elsif agentlevel.businetype == 'manager'
-        childrens = user.childrens
-        lcount = 0
-        childrens.each do |f|
-          if cal_upgrade_character_size(f.id, 'manager')
-            lcount += 1
+          parent = user.parent
+          if parent
+            parent.update(directorcount: parent.directorcount.to_i - 1, managercount: parent.managercount.to_i + 1)
           end
         end
+      elsif agentlevel.businetype == 'manager'
+        #childrens = user.childrens
+        # lcount = 0
+        # childrens.each do |f|
+        #   if cal_upgrade_character_size(f.id, 'manager')
+        #     lcount += 1
+        #   end
+        # end
+        lcount = user.managercount.to_i
         if lcount > 2
           temagentlevel = Agentlevel.find_by_businetype('partner')
           user.examines.create(agentlevel_id: temagentlevel.id, examinedate: Time.now + 6.months, checkexamine: 0)
+          parent = user.parent
+          if parent
+            parent.update(managercount: parent.managercount.to_i - 1)
+          end
         end
       end
     end
     parent = user.parent
     if parent
       teamupgrade(parent.id)
+    end
+  end
+
+  def self.add_parent_orderid(orderid, userid) #增加父级订单id
+    user = User.find(userid)
+    user.teamorderids.create(order_id: orderid)
+    parent = user.parent
+    if parent
+      add_parent_orderid(orderid, parent.id)
     end
   end
 
@@ -101,11 +125,63 @@ class Backrun
       amount = Setting.first.firstprofit.to_f * order.amount.to_f / 100
       if amount > 0
         parent.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: user.nickname.to_s + '分销收入',profittype: 'distribute')
+        data = {
+            touser: parent.openid,
+            template_id: "oTv6Jpg8BABDeDOa2uSdBrceEmj239AEzi_ZcVDmmxk",
+            miniprogram: {
+                appid: Setting.first.appid,
+                path: "index"
+            },
+            data: {
+                first: {
+                    value: "团队用户成功下单",
+                },
+                keyword1: {
+                    value: order.ordernumber,
+                },
+                keyword2: {
+                    value: order.amount.to_s(:currency, unit:''),
+                },
+                keyword3: {
+                    value: amount.to_s(:currency, unit: '')
+                },
+                remark: {
+                    value: "",
+                }
+            }
+        }
+        SendmpmsgJob.perform_later(parent.id, data.to_json)
       end
       parent_parent = parent.parent
       if parent_parent
         amount = Setting.first.secondprofit.to_f * order.amount.to_f / 100
         parent_parent.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: user.nickname.to_s + '分销收入',profittype: 'distribute')
+        data = {
+            touser: parent_parent.openid,
+            template_id: "oTv6Jpg8BABDeDOa2uSdBrceEmj239AEzi_ZcVDmmxk",
+            miniprogram: {
+                appid: Setting.first.appid,
+                path: "index"
+            },
+            data: {
+                first: {
+                    value: "团队用户成功下单",
+                },
+                keyword1: {
+                    value: order.ordernumber,
+                },
+                keyword2: {
+                    value: order.amount.to_s(:currency, unit:''),
+                },
+                keyword3: {
+                    value: amount.to_s(:currency, unit: '')
+                },
+                remark: {
+                    value: "",
+                }
+            }
+        }
+        SendmpmsgJob.perform_later(parent_parent.id, data.to_json)
       end
     end
   end
@@ -122,6 +198,32 @@ class Backrun
       amountsum = temamount
       amount = temamount - amount
       user.incomes.create(amount: amount, ordernumber: order.ordernumber, status: 0, summary: orderuser.nickname.to_s + '团队收入',profittype: 'team')
+      data = {
+          touser: user.openid,
+          template_id: "oTv6Jpg8BABDeDOa2uSdBrceEmj239AEzi_ZcVDmmxk",
+          miniprogram: {
+              appid: Setting.first.appid,
+              path: "index"
+          },
+          data: {
+              first: {
+                  value: "团队用户成功下单",
+              },
+              keyword1: {
+                  value: order.ordernumber,
+              },
+              keyword2: {
+                  value: order.amount.to_s(:currency, unit:''),
+              },
+              keyword3: {
+                  value: amount.to_s(:currency, unit: '')
+              },
+              remark: {
+                  value: "",
+              }
+          }
+      }
+      SendmpmsgJob.perform_later(user.id, data.to_json)
     end
     parent = user.parent
     if parent
@@ -261,6 +363,33 @@ class Backrun
     incomes = Income.where(ordernumber: order.ordernumber)
     incomes.each do |f|
       f.update(status: 1)
+      user = f.user
+      data = {
+          touser: user.openid,
+          template_id: "V380nofoCwjgvwYkmHaCqE3pQ0FrFttJQ6m_WggA3JM",
+          miniprogram: {
+              appid: Setting.first.appid,
+              path: "index"
+          },
+          data: {
+              first: {
+                  value: "收益到账通知：",
+              },
+              keyword1: {
+                  value: f.amount.to_s(:currency, unit: ''),
+              },
+              keyword2: {
+                  value: '团队用户下单',
+              },
+              keyword3: {
+                  value: f.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+              },
+              remark: {
+                  value: "您的收益已到账。",
+              }
+          }
+      }
+      SendmpmsgJob.perform_later(user.id, data.to_json)
     end
   end
 
@@ -293,5 +422,197 @@ class Backrun
     data["access_token"]
   end
 
+  def self.get_mpaccesstoken
+    if !Mpaccesstoken.first
+      mpaccesstoken = refresh_mpaccesstoken
+    elsif Mpaccesstoken.first.created_at.to_i + Mpaccesstoken.first.expiresin.to_i - 10 < Time.now.to_i
+      mpaccesstoken = refresh_mpaccesstoken
+      if Mpaccesstoken.first && Mpaccesstoken.first.accesstoken.to_s.size > 0
+        GetallmpuserJob.perform_later
+      end
+    else
+      mpaccesstoken = Mpaccesstoken.first.accesstoken
+    end
+    mpaccesstoken
+  end
+
+  def self.refresh_mpaccesstoken
+    conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:grant_type] = 'client_credential'
+    conn.params[:appid] = Setting.first.mpappid
+    conn.params[:secret] = Setting.first.mpappsecret
+    request = conn.get do |req|
+      req.url '/cgi-bin/token'
+    end
+    data = JSON.parse(request.body)
+    Mpaccesstoken.all.destroy_all
+    Mpaccesstoken.create(accesstoken: data["access_token"], expiresin: data["expires_in"])
+    data["access_token"]
+  end
+
+  def self.get_all_mp_user_openid(next_openid = '') #重新获取所有用户公众号openid
+    conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    conn.params[:access_token] = get_mpaccesstoken
+    conn.params[:next_openid] = next_openid
+    request = conn.get do |req|
+      req.url '/cgi-bin/user/get'
+    end
+    data = JSON.parse(request.body)
+    if !data["errcode"] && data["data"]
+      mpopenids = data["data"]["openid"]
+      mpopenids.each do |f|
+        conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+          faraday.request :url_encoded # form-encode POST params
+          faraday.response :logger # log requests to STDOUT
+          faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+        end
+        conn.params[:access_token] = get_mpaccesstoken
+        conn.params[:openid] = f
+        request = conn.get do |req|
+          req.url '/cgi-bin/user/info'
+        end
+        data = JSON.parse(request.body)
+        mpuser = Mpuser.find_by_openid(f)
+        if !mpuser
+          Mpuser.create(openid: data["openid"], unionid: data["unionid"], nickname: data["nickname"], headurl: data["headimgurl"], subscribe: data["subscribe"])
+        else
+          mpuser.update(subscribe: data["subscribe"])
+        end
+      end
+      if mpopenids.size > 0
+        get_all_mp_user_openid(mpopenids.last)
+      end
+    end
+  end
+
+  def self.get_mp_user_openid(unionid)
+    openid = nil
+    mpuser = Mpuser.find_by_unionid(unionid)
+    if mpuser
+      openid = mpuser.openid
+    else
+      mpuser = Mpuser.last
+      next_openid = ''
+      if mpuser
+        next_openid = mpuser.openid
+      end
+      conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+        faraday.request :url_encoded # form-encode POST params
+        faraday.response :logger # log requests to STDOUT
+        faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+      end
+      conn.params[:access_token] = get_mpaccesstoken
+      conn.params[:next_openid] = next_openid
+      request = conn.get do |req|
+        req.url '/cgi-bin/user/get'
+      end
+      data = JSON.parse(request.body)
+      mpopenids = data["data"]["openid"]
+      mpopenids.each do |f|
+        conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+          faraday.request :url_encoded # form-encode POST params
+          faraday.response :logger # log requests to STDOUT
+          faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+        end
+        conn.params[:access_token] = get_mpaccesstoken
+        conn.params[:openid] = f
+        request = conn.get do |req|
+          req.url '/cgi-bin/user/info'
+        end
+        data = JSON.parse(request.body)
+        mpuser = Mpuser.find_by_openid(f)
+        if !mpuser
+          Mpuser.create(openid: data["openid"], unionid: data["unionid"], nickname: data["nickname"], headurl: data["headimgurl"], subscribe: data["subscribe"])
+        end
+      end
+      mpuser = Mpuser.find_by_unionid(unionid)
+      if mpuser
+        openid = mpuser.openid
+      end
+    end
+    openid
+  end
+
+  def self.send_mp_msg(userid,data)
+    begin
+      user = User.find_by(id:userid)
+      coverdata = JSON.parse(data)
+      coverdata["touser"] = get_mp_user_openid(user.unionid)
+      if user && user.unionid.to_s.size > 0
+        conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+          faraday.request :url_encoded # form-encode POST params
+          faraday.response :logger # log requests to STDOUT
+          faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+        end
+        conn.params[:access_token] = get_mpaccesstoken
+        request = conn.post do |req|
+          req.url '/cgi-bin/message/template/send'
+          req.body = coverdata.to_json
+        end
+      end
+    rescue
+    end
+  end
+
+  def self.send_user_reg_msg(userid, username)
+    user = User.find_by(id:userid)
+    if user && user.unionid.to_s.size > 0
+      mpuser_openid = get_mp_user_openid(user.unionid)
+      conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+        faraday.request :url_encoded # form-encode POST params
+        faraday.response :logger # log requests to STDOUT
+        faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+      end
+      data = {
+          touser: mpuser_openid,
+          template_id: "2k6-0uWT7RBfEbZMLU9efcSL2TFd003i4fZGsv0Y32Y",
+          miniprogram: {
+              appid: Setting.first.appid,
+              path: "index"
+          },
+          data: {
+              first: {
+                  value: "新用户注册成功",
+              },
+              keyword1: {
+                  value: username,
+              },
+              keyword2: {
+                  value: "2021-08-15 18:24:36",
+              },
+              remark: {
+                  value: "",
+              }
+          }
+      }
+      conn.params[:access_token] = get_mpaccesstoken
+      request = conn.post do |req|
+        req.url '/cgi-bin/message/template/send'
+        req.body = data.to_json
+      end
+      data = JSON.parse(request.body)
+    end
+  end
+
+  def self.cal_signlediscount(userid)
+    user = User.find(userid)
+    buycars = user.buycars
+    signlediscounts = Singlediscount.where('status = ? and begintime <= ? and endtime >= ?', 1, Time.now, Time.now)
+    signlediscounts.each do |signlediscount|
+      buycars.each do |buycar|
+        if signlediscount.product_id == buycar.product_id
+          buycar.update(price: signlediscount.discount / 100 * buycar.price, proprice: signlediscount.discount / 100 * buycar.price)
+        end
+      end
+    end
+  end
 
 end

@@ -38,8 +38,74 @@ class Api::WxqueryController < ApplicationController
   def upuser
     user = User.find_by_token(params[:token])
     upuser = User.find(params[:uid])
-    if user.up_id.to_i == 0 && !check_children(user.id, upuser.id)
+    if user.up_id.to_i == 0 && !check_children(user.id, upuser.id) && user.created_at > Time.now - 1.days
       user.update(up_id: upuser.id)
+      parent = user.parent
+      while parent do
+        parent.update(peoplecount: parent.peoplecount.to_i + 1, mancount: parent.mancount.to_i + 1)
+        data = {
+            touser: parent.openid,
+            template_id: "2k6-0uWT7RBfEbZMLU9efcSL2TFd003i4fZGsv0Y32Y",
+            miniprogram: {
+                appid: Setting.first.appid,
+                path: "index"
+            },
+            data: {
+                first: {
+                    value: "新用户注册成功",
+                },
+                keyword1: {
+                    value: user.openid[-10,10],
+                },
+                keyword2: {
+                    value: user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                remark: {
+                    value: "",
+                }
+            }
+        }
+        SendmpmsgJob.perform_later(parent.id, data.to_json)
+        parent = parent.parent
+      end
+    end
+    return_api('')
+  end
+
+  def liveupuser
+    user = User.find_by_token(params[:token])
+    if params[:res] && params[:share_openid]
+    upuser = User.find_by_openid(params[:res][:share_openid])
+    if upuser && user.up_id.to_i == 0 && user.id != upuser.id
+      user.update(up_id: upuser.id)
+      parent = user.parent
+      while parent do
+        data = {
+            touser: parent.openid,
+            template_id: "2k6-0uWT7RBfEbZMLU9efcSL2TFd003i4fZGsv0Y32Y",
+            miniprogram: {
+                appid: Setting.first.appid,
+                path: "index"
+            },
+            data: {
+                first: {
+                    value: "新用户注册成功",
+                },
+                keyword1: {
+                    value: user.openid[-10,10],
+                },
+                keyword2: {
+                    value: user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                remark: {
+                    value: "",
+                }
+            }
+        }
+        SendmpmsgJob.perform_later(parent.id, data.to_json)
+        parent = parent.parent
+      end
+    end
     end
     return_api('')
   end

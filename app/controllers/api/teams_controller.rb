@@ -1,7 +1,7 @@
 class Api::TeamsController < ApplicationController
   def index
     user = User.find_by_token(params[:token])
-    users = user.childrens.order('id desc').page(params[:page]).per(10)
+    users = user.childrens.order('id desc').page(params[:page]).per(20)
     final = 0
     final = 1 if users.last_page? || users.out_of_range?
     userarr = []
@@ -10,21 +10,31 @@ class Api::TeamsController < ApplicationController
           id: f.id,
           headurl: f.headurl.to_s,
           nickname: f.nickname.to_s,
-          salesum: get_year_salesum(f.id).to_s(:currency, unit:''),
-          salecount: get_year_salecount(f.id),
-          peoplecount: get_peoplecount(f.id),
-          mancount: get_businecount(f.id, f.id, 'man'),
-          directorcount: get_businecount(f.id, f.id, 'director'),
-          managercount: get_businecount(f.id, f.id,'manager'),
+          #salesum: get_year_salesum(f.id).to_s(:currency, unit:''),
+          salesum: f.salesum.to_f.to_s(:currency, unit: ''),
+          #salecount: get_year_salecount(f.id),
+          salecount: f.salecount.to_i,
+          #peoplecount: get_peoplecount(f.id),
+          peoplecount: f.peoplecount.to_i,
+          #mancount: get_businecount(f.id, f.id, 'man'),
+          mancount: f.mancount.to_i,
+          #directorcount: get_businecount(f.id, f.id, 'director'),
+          directorcount: f.directorcount.to_i,
+          #managercount: get_businecount(f.id, f.id,'manager'),
+          managercount: f.managercount.to_i,
           agentname: f.examines.last.agentlevel.name
       }
       userarr.push user_param
     end
     team_param = {
-        peoplecount: get_peoplecount(user.id),
-        mancount: get_businecount(user.id, user.id, 'man'),
-        directorcount: get_businecount(user.id, user.id, 'director'),
-        managercount: get_businecount(user.id, user.id, 'manager')
+        #peoplecount: get_peoplecount(user.id),
+        peoplecount: user.peoplecount.to_i,
+        #mancount: get_businecount(user.id, user.id, 'man'),
+        mancount: user.mancount.to_i,
+        #directorcount: get_businecount(user.id, user.id, 'director'),
+        directorcount: user.directorcount.to_i,
+        #managercount: get_businecount(user.id, user.id, 'manager'),
+        managercount: user.managercount.to_i
     }
     param = {
         final: final,

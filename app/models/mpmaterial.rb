@@ -1,0 +1,2 @@
+class Mpmaterial < ApplicationRecord
+end

@@ -10,6 +10,7 @@ class Api::EvaluatesController < ApplicationController
     order.orderdetails.each do |f|
       product = f.product
       product.evaluates << evaluate
+      EvaluatesumJob.perform_later(product.id)
     end
     return_api('')
   end

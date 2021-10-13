@@ -4,9 +4,43 @@ class PolldeliverController < ApplicationController
     orderdelivers = Orderdeliver.where('nu = ?',result["lastResult"]["nu"])
     orderdelivers.each do |orderdeliver|
       begin
-        orderdeliver.update(cdata: result['lastResult']['data'].to_json, state: result['lastResult']['state'])
         order = orderdeliver.order
+        if orderdeliver.cdata.to_s.size == 0
+          data = {
+              touser: user.openid,
+              template_id: "yQtPa17c47ylsDl81RQBJBo-tj-yZPNb6JOJMsF6nFM",
+              miniprogram: {
+                  appid: Setting.first.appid,
+                  path: "index"
+              },
+              data: {
+                  first: {
+                      value: "您购买的商品已经发货",
+                  },
+                  keyword1: {
+                      value: order.ordernumber,
+                  },
+                  keyword2: {
+                      value: Time.now.strftime('%Y-%m-%d %H:%M:%S'),
+                  },
+                  keyword3: {
+                      value: orderdeliver.company
+                  },
+                  keyword4: {
+                      value: orderdeliver.nu
+                  },
+                  remark: {
+                      value: "",
+                  }
+              }
+          }
+          SendmpmsgJob.perform_later(order.user.id, data.to_json)
+        end
+
+        orderdeliver.update(cdata: result['lastResult']['data'].to_json, state: result['lastResult']['state'])
+
         check_state(order.id)
+
       rescue
         logger.info 'json出错了'
       end

@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  buyfullactive_id: 
+  buynumber: 1
+  givenumber: 1
+  giveproduct_id: 
+
+two:
+  buyfullactive_id: 
+  buynumber: 1
+  givenumber: 1
+  giveproduct_id: 

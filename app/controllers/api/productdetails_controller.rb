@@ -60,7 +60,8 @@ class Api::ProductdetailsController < ApplicationController
     proprice = product.price.to_f
     shopusers = user.shopusers.where('member <> ?', 0)
     proprice = product.proprice.to_f if shopusers.size > 0 && product.proprice.to_f > 0
-
+    startnumber = product.retailstartnumber.to_i
+    startnumber = product.startnumber.to_i if shopusers.size > 0
     product_param = {
         id: product.id,
         banners: product.productbanners.order('corder').map(&:banner),
@@ -73,7 +74,10 @@ class Api::ProductdetailsController < ApplicationController
         pv: pv,
         salecount: salecount,
         buyparams: buyparamarr,
-        cover: product.cover
+        cover: product.cover,
+        onsale: product.onsale.to_i,
+        startnumber: startnumber,
+        propriceorgin: product.proprice
     }
     return_api(product_param)
   end

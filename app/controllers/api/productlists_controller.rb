@@ -53,6 +53,10 @@ class Api::ProductlistsController < ApplicationController
         }
         buyparamarr.push buyparam_param
       end
+      startnumber = f.retailstartnumber.to_i
+      startnumber = f.startnumber if shopusers.size > 0
+      buyfullactives = Buyfullactive.where('begintime <= ? and endtime >= ? and status = ? and product_id = ?', Time.now, Time.now, 1, f.id)
+      activetag = buyfullactives.map(&:nametag)
       product_param = {
           id: f.id,
           name: f.name,
@@ -60,8 +64,10 @@ class Api::ProductlistsController < ApplicationController
           cover: f.cover,
           number: 0,
           priceMarket: f.price,
-          startnumber: f.startnumber.to_i,
-          buyparams: buyparamarr
+          startnumber: startnumber,
+          buyparams: buyparamarr,
+          proprice: f.proprice.to_f,
+          activetag: activetag
       }
       productarr.push product_param
     end

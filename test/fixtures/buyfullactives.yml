@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  nametag: MyString
+  begintime: 2021-10-06 10:27:33
+  endtime: 2021-10-06 10:27:33
+  summary: MyString
+  cover: MyString
+  price: 1.5
+  product_id: 
+  status: 1
+
+two:
+  name: MyString
+  nametag: MyString
+  begintime: 2021-10-06 10:27:33
+  endtime: 2021-10-06 10:27:33
+  summary: MyString
+  cover: MyString
+  price: 1.5
+  product_id: 
+  status: 1

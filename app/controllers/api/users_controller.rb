@@ -79,7 +79,8 @@ class Api::UsersController < ApplicationController
     param = {
         user: user_param,
         currentaddress: currentaddress,
-        defaultinvoice: defaultinvoice
+        defaultinvoice: defaultinvoice,
+        subscribemp: check_subscribemp(user.id)
     }
     return_api(param)
   end
@@ -151,5 +152,17 @@ class Api::UsersController < ApplicationController
     receiveaddr = Receiveaddr.find(params[:addr_id])
     receiveaddr.destroy
     return_api('')
+  end
+
+  def check_subscribemp(userid) #检查关注公众号状态
+    user = User.find(userid)
+    subscribemp = 1
+    mpuser = Mpuser.find_by_unionid(user.unionid)
+    if !mpuser
+      subscribemp = 0
+    else
+      subscribemp = mpuser.subscribe.to_i
+    end
+    subscribemp
   end
 end

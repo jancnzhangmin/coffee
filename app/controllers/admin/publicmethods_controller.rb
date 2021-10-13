@@ -78,4 +78,17 @@ class Admin::PublicmethodsController < ApplicationController
     }
     return_res(param)
   end
+
+  def get_products
+    products = Product.all
+    productarr = []
+    products.each do |product|
+      product_param = {
+          value: product.id,
+          label: product.name
+      }
+      productarr.push product_param
+    end
+    return_res(productarr)
+  end
 end

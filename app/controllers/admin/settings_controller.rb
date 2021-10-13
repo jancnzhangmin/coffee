@@ -9,6 +9,8 @@ class Admin::SettingsController < ApplicationController
     data = JSON.parse(params[:data])
     setting.update(appid: data["appid"],
                    appsecret: data["appsecret"],
+                   mpappid: data["mpappid"],
+                   mpappsecret: data["mpappsecret"],
                    firstprofit: data["firstprofit"],
                    secondprofit: data["secondprofit"],
                    kuaidikey: data["kuaidikey"],

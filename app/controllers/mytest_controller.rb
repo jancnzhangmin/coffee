@@ -27,4 +27,19 @@ class MytestController < ApplicationController
     end
     return_res(userarr)
   end
+
+  def createuser
+    #user = User.create(nickname: 'user' + rand(1000000).to_s, openid: 'openid' + rand(100000), up_id: 28)
+    createchildren(26,10)
+  end
+
+  private
+  def createchildren(userid, steptime)
+    if steptime > 0
+      2.times do
+      user = User.create(nickname: 'user' + rand(1000000).to_s, openid: 'openid' + rand(100000).to_s, up_id: userid)
+      createchildren(user.id, steptime - 1)
+      end
+    end
+  end
 end

@@ -10,6 +10,10 @@ class Admin::UsersController < ApplicationController
     if params[:filtervalue].to_s.size > 0
       users = users.where('openid like ? or nickname like ?', "%#{params[:filtervalue]}%", "%#{params[:filtervalue]}%")
     end
+    haswithdrawalcount = Withdrawal.where(status: 1).sum('amount')
+    nowithdrawalcount = Income.where(status: 1).sum('amount') - haswithdrawalcount
+    haswithdrawalcount = haswithdrawalcount.to_s(:currency, unit: '')
+    nowithdrawalcount = nowithdrawalcount.to_s(:currency, unit: '')
     total = users.size
     users = users.page(params[:page]).per(params[:per])
     userarr = []
@@ -23,6 +27,8 @@ class Admin::UsersController < ApplicationController
       if examine
         agentlevel = examine.agentlevel.name
       end
+      canwithdrawal = f.incomes.where(status: 1).sum('amount') - f.withdrawals.where(status: 1).sum('amount')
+      canwithdrawal = canwithdrawal.to_s(:currency, unit: '')
       user_param = {
           id: f.id,
           headurl: f.headurl.to_s,
@@ -30,13 +36,16 @@ class Admin::UsersController < ApplicationController
           openid: f.openid.to_s,
           upuser: upuser,
           agentlevel: agentlevel,
-          created_at: f.created_at.strftime('%Y-%m-%d %H:%M:%S')
+          created_at: f.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+          canwithdrawal: canwithdrawal
       }
       userarr.push user_param
     end
     param = {
         data: userarr,
-        total: total
+        total: total,
+        haswithdrawalcount: haswithdrawalcount,
+        nowithdrawalcount: nowithdrawalcount
     }
     return_res(param)
   end
