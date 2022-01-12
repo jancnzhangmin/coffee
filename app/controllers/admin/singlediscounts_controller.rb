@@ -22,7 +22,13 @@ class Admin::SinglediscountsController < ApplicationController
           endtime: siglediscount.endtime,
           begintimestr: siglediscount.begintime.strftime('%Y-%m-%d %H:%M:%S'),
           endtimestr: siglediscount.endtime.strftime('%Y-%m-%d %H:%M:%S'),
-          state: siglediscount.status
+          state: siglediscount.status,
+          cover: siglediscount.cover,
+          price: siglediscount.price.to_f.to_s(:currency, unit: ''),
+          nametag: siglediscount.nametag,
+          summary: siglediscount.summary,
+          limitnewpeople: siglediscount.limitnewpeople.to_i,
+          newpeopletime: siglediscount.newpeopletime
       }
       siglediscountarr.push siglediscount_param
     end
@@ -54,7 +60,13 @@ class Admin::SinglediscountsController < ApplicationController
         discount: data["discount"],
         begintime: data["range"][0],
         endtime: data["range"][1],
-        status: status
+        status: status,
+        nametag: data["nametag"],
+        price: data["price"],
+        cover: data["cover"],
+        summary: data["summary"],
+        limitnewpeople: data["limitnewpeople"],
+        newpeopletime: data["newpeopletime"]
     )
     return_res('')
   end
@@ -71,7 +83,13 @@ class Admin::SinglediscountsController < ApplicationController
         discount: data["discount"],
         begintime: data["range"][0],
         endtime: data["range"][1],
-        status: status
+        status: status,
+        nametag: data["nametag"],
+        price: data["price"],
+        cover: data["cover"],
+        summary: data["summary"],
+        limitnewpeople: data["limitnewpeople"],
+        newpeopletime: data["newpeopletime"]
     )
     return_res('')
   end

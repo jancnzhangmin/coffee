@@ -7,6 +7,12 @@ class Admin::ProductsController < ApplicationController
     else
       products = Product.all
     end
+    if params[:producttype] == "sale"
+      products = products.where(onsale: 1)
+    elsif params[:producttype] == "down"
+      products = products.where(onsale: 0)
+    end
+    products = products.where('name like ?', "%#{params[:filtervalue]}%")
     total = products.size
     products = products.page(params[:page]).per(params[:per])
     productarr = []
@@ -43,6 +49,7 @@ class Admin::ProductsController < ApplicationController
     onsale = 0
     onsale = 1 if data["onsale"]
     Product.create(
+        supplier_id: data["supplier_id"],
         name: data["name"],
         subname: data["subname"],
         cost: data["cost"],
@@ -52,7 +59,8 @@ class Admin::ProductsController < ApplicationController
         content: data["content"],
         cover: data["cover"],
         startnumber: data["startnumber"],
-        retailstartnumber: data["retailstartnumber"]
+        retailstartnumber: data["retailstartnumber"],
+        suppliername: data["suppliername"]
     )
     return_res('')
   end
@@ -63,6 +71,7 @@ class Admin::ProductsController < ApplicationController
     onsale = 1 if data["onsale"]
     product = Product.find(params[:id])
     product.update(
+        supplier_id: data["supplier_id"],
         name: data["name"],
         subname: data["subname"],
         cost: data["cost"],
@@ -72,17 +81,39 @@ class Admin::ProductsController < ApplicationController
         content: data["content"],
         cover: data["cover"],
         startnumber: data["startnumber"],
-        retailstartnumber: data["retailstartnumber"]
+        retailstartnumber: data["retailstartnumber"],
+        suppliername: data["suppliername"]
     )
     return_res('')
   end
 
   def show
     product = Product.find(params[:id])
-    if product
-      return_res(product)
-    else
-      return_res('', 10001, '无效的记录值')
+    suppliers = Supplier.all
+    supplierarr = []
+    suppliers.each do |supplier|
+      supplier_param = {
+          value: supplier.id,
+          label: supplier.name
+      }
+      supplierarr.push supplier_param
     end
+    product_param = {
+        id: product.id,
+        supplier_id: product.supplier_id,
+        suppliers: supplierarr,
+        name: product.name,
+        suppliername: product.suppliername,
+        subname: product.subname,
+        cost: product.cost,
+        price: product.price,
+        proprice: product.proprice,
+        onsale: product.onsale.to_i,
+        content: product.content,
+        cover: product.cover,
+        startnumber: product.startnumber,
+        retailstartnumber: product.retailstartnumber
+    }
+    return_res(product_param)
   end
 end

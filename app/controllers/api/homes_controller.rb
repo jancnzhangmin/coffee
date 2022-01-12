@@ -5,7 +5,7 @@ class Api::HomesController < ApplicationController
     banners.each do |f|
       banner_param = {
           img: f.banner,
-          url: '',
+          url: f.link,
           title: '',
           opentype: 'navigate'
       }
@@ -75,8 +75,11 @@ class Api::HomesController < ApplicationController
     orderarr.size.times do |i|
       price = products[orderarr[i]].price
       price = products[orderarr[i]].proprice.to_f if shopusers.size > 0 && products[orderarr[i]].proprice.to_f > 0
-      buyfullactives = Buyfullactive.where('begintime <= ? and endtime >= ? and status = ? and product_id = ?', Time.now, Time.now, 1, products[orderarr[i]].id)
-      activetag = buyfullactives.map(&:nametag)
+      activetag = []
+      active = Backrun.get_product_summary(products[orderarr[i]].id, user.id)
+      if active.size > 0
+        activetag = active.map{|n|n[:activetag]}
+      end
       product_param = {
           id: products[orderarr[i]].id,
           name: products[orderarr[i]].name,

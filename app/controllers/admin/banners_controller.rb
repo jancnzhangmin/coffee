@@ -8,7 +8,7 @@ class Admin::BannersController < ApplicationController
       banner_param = {
           id: f.id,
           banner: f.banner,
-          products: f.products.map(&:name).join(' '),
+          link: f.link,
           corder: f.corder
       }
       bannerarr.push banner_param
@@ -22,23 +22,14 @@ class Admin::BannersController < ApplicationController
 
   def create
     data = JSON.parse(params[:data])
-    banner = Banner.create(banner: data["banner"])
-    data["value"].each do |f|
-      product = Product.find(f)
-      banner.products << product
-    end
+    Banner.create(banner: data["banner"], link: data["link"])
     return_res('')
   end
 
   def update
     data = JSON.parse(params[:data])
     banner = Banner.find(params[:id])
-    banner.update(banner: data["banner"])
-    banner.products.destroy_all
-    data["value"].each do |f|
-      product = Product.find(f)
-      banner.products << product
-    end
+    banner.update(banner: data["banner"], link: data["link"])
     return_res('')
   end
 

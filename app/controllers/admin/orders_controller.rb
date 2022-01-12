@@ -185,13 +185,13 @@ class Admin::OrdersController < ApplicationController
     orderdetails = order.orderdetails
     orderdetailarr = []
     orderdetails.each do |f|
-    orderdetail_param = {
-        product: f.product.name,
-        number: f.number,
-        price: f.price.to_s(:currency, unit:''),
-        pricesum: (f.number * f.price).to_s(:currency, unit: '')
-    }
-    orderdetailarr.push orderdetail_param
+      orderdetail_param = {
+          product: f.product.name,
+          number: f.number,
+          price: f.price.to_s(:currency, unit:''),
+          pricesum: (f.number * f.price).to_s(:currency, unit: '')
+      }
+      orderdetailarr.push orderdetail_param
     end
     orderdelivers = order.orderdelivers
     orderdeliverarr = []
@@ -258,6 +258,7 @@ class Admin::OrdersController < ApplicationController
         orderdeliver = order.orderdelivers.create(com: expresscode.comcode, nu: f, company: expresscode.name)
         get_deliverdetail(orderdeliver.id, expresscode.comcode, f)
         poll_deliver(expresscode.comcode, f)
+        follow_waybill(order.id, f)
       end
     end
     order.update(deliverstatus: 1, delivertime: Time.now)
@@ -283,6 +284,121 @@ class Admin::OrdersController < ApplicationController
       orderinvoice.update(processed: data["invoiceprocessed"])
     end
     return_res('')
+  end
+
+  def export_print #导出打印模板
+    headers = [
+        "编号",
+        "寄件人姓名",
+        "寄件人手机",
+        "寄件人座机",
+        "收件人姓名",
+        "收件人手机",
+        "收件人座机",
+        "收件地址",
+        "物品信息",
+        "价格",
+        "备注"
+    ]
+    orders = Order.where(paystatus: 1, deliverstatus: 0, afterstatus: 0)
+    data = []
+    orders.each do |order|
+      orderdetails = order.orderdetails
+      orderdetailarr = []
+      orderdetails.each do |orderdetail|
+        product = orderdetail.product
+        name = product.suppliername
+        cost = product.cost
+        orderdetailparams = orderdetail.orderdetailparams
+        orderdetailparams.each do |orderdetailparam|
+          buyparam = Buyparamvalue.find_by(id: orderdetailparam.buyparamvalue_id)
+          if buyparam
+            name = buyparam.suppliername
+            cost += buyparam.cost.to_f
+          end
+        end
+        orderdetail_param = {
+            name: name,
+            number: orderdetail.number,
+            cost: cost,
+            product_id: product.id,
+            supplier_id: product.supplier_id
+        }
+        orderdetailarr.push orderdetail_param
+      end
+      data_param = {
+          serial: nil,
+          sendcontact: nil,
+          sendphone: nil,
+          sendtel: nil,
+          contact: order.contact.to_s,
+          contactphone: order.contactphone,
+          contacttel: nil,
+          address: order.province.to_s + order.city.to_s + order.district.to_s + order.address.to_s,
+          products: orderdetailarr,
+          price: 0,
+          summary: nil
+      }
+      data.push data_param
+    end
+    newarr = []
+    data.each do |dt|
+      newdata = newarr.select{|n| n[:contact] == dt[:contact] && n[:contactphone] == dt[:contactphone] && n[:address] == dt[:address]}.first
+      if newdata
+        dt[:products].each do |dpd|
+          newproduct = newdata[:products].select{|n| n[:name] == dpd[:name]}.first
+          if newproduct
+            newproduct[:number] += dpd[:number]
+          else
+            obj = Marshal.load(Marshal.dump(dpd))
+            newdata[:products].push obj
+          end
+        end
+      else
+        obj = Marshal.load(Marshal.dump(dt))
+        newarr.push obj
+      end
+    end
+    newarr.each do |dt|
+      #dt[:price] = dt[:products].map{|n| n[:cost]}.sum * dt[:products].map{|n|n[:number]}.sum
+      price = 0
+      dt[:products].each do |dr|
+        price += dr[:cost] * dr[:number]
+      end
+      dt[:price] = price
+      supplierids = Supplier.where(id: dt[:products].map{|n| n[:supplier_id]}).ids
+      expressfree = 0
+      supplierids.each do |suppliserid|
+        supplier = Supplier.find_by(id: suppliserid)
+        if supplier
+          number = dt[:products].map{|n| n[:supplier_id] == suppliserid ? n[:number] : 0}.sum - 1
+          expressfree += supplier.firstorder.to_f
+          renewal = supplier.renewalorder.to_f * number
+          if renewal > 0
+            expressfree += renewal
+          end
+        end
+      end
+      dt[:price] += expressfree
+    end
+    dataarr = []
+    newarr.each do |dt|
+      dataarr.push [
+                       dt[:serial],
+                       dt[:sendcontact],
+                       dt[:sendphone],
+                       dt[:sendtel],
+                       dt[:contact],
+                       dt[:contactphone],
+                       dt[:contacttel],
+                       dt[:address],
+                       dt[:products].map{|n| n[:name].to_s + n[:number].to_i.to_s}.join("\n"),
+                       dt[:price],
+                       dt[:summary]
+                   ]
+    end
+    exl = SpreadsheetArchitect.to_xlsx(headers: headers, data: dataarr)
+    send_data exl, :filename=> '快递订单_' + Time.now.strftime('%Y%m%d%H%M%S') + ".xlsx"
   end
 
   private
@@ -333,4 +449,58 @@ class Admin::OrdersController < ApplicationController
       req.url '/poll'
     end
   end
+
+  def follow_waybill(orderid, num)
+    order = Order.find(orderid)
+    user = order.user
+    detail_list = []
+    orderdetails = order.orderdetails
+    orderdetails.each do |orderdetail|
+      product = orderdetail.product
+      goods_name = product.name
+      cover = product.cover
+      orderdetailparams = orderdetail.orderdetailparams
+      buyparamarr = []
+      orderdetailparams.each do |orderdetailparam|
+        buyparamvalue = Buyparamvalue.find_by(id: orderdetailparam.buyparamvalue_id)
+        if buyparamvalue
+          buyparamarr.push orderdetailparam.buyparam + ' ' + orderdetailparam.buyparamvalue
+          if buyparamvalue.cover.to_s.size > 0
+            cover = buyparamvalue.cover
+          end
+        end
+      end
+      if buyparamarr.size > 0
+        goods_name += '（' + buyparamarr.join(' ') + '）'
+      end
+      if goods_name.size > 40
+        goods_name = goods_name[0,37] + '...'
+      end
+      detaillist_param = {
+          goods_name: goods_name,
+          goods_img_url: cover
+      }
+      detail_list.push detaillist_param
+    end
+    param = {
+        openid: user.openid,
+        receiver_phone: order.contactphone,
+        waybill_id: num,
+        goods_info: {
+            detail_list: detail_list
+        },
+        trans_id: order.ordernumber
+    }
+    conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    request = conn.post do |req|
+      req.url '/cgi-bin/express/delivery/open_msg/follow_waybill?access_token=' + Backrun.get_accesstoken
+      req.body = param.to_json
+    end
+
+  end
+
 end

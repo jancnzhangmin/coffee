@@ -58,6 +58,20 @@ class Initrun
     end
   end
 
+  def self.testwall
+    conn = Faraday.new(:url => 'https://api.weixin.qq.com') do |faraday|
+      faraday.request :url_encoded # form-encode POST params
+      faraday.response :logger # log requests to STDOUT
+      faraday.adapter Faraday.default_adapter # make requests with Net::HTTP
+    end
+    request = conn.post do |req|
+      req.url '/cgi-bin/express/delivery/open_msg/query_follow_trace?access_token=' + Backrun.get_accesstoken
+      req.body = {
+          waybill_token: 'kiuz3g8hbJqheGU2cJUvmbnrWOC0AA_EhaAec24HUZtT8heLqkoQD790pGJSFXj'
+      }.to_json
+    end
+  end
+
   private
 
   def self.get_year_salesum(userid, yearsum = 0)

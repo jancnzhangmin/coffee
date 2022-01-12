@@ -25,7 +25,7 @@ module Coffee
     config.active_job.queue_adapter = :sidekiq
     config.load_defaults 6.0
     config.serverurl = 'http://192.168.50.90:3000'
-    #config.serverurl = 'https://coffee.ysdsoft.com'
+    #config.serverurl = 'https://cdncoffee.ysdsoft.com'
     config.time_zone = 'Beijing'
      config.middleware.insert_before 0, Rack::Cors do
       allow do

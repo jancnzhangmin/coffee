@@ -39,11 +39,22 @@ class Api::OrdersController < ApplicationController
     else
       buycars.each do |f|
         orderdetail = order.orderdetails.create(product_id: f.product_id, number: f.number, price: f.price)
-        f.buyarparams.each do |bp|
+        f.buycarparams.each do |bp|
           orderdetail.orderdetailparams.create(buyparam: bp.buyparam, buyparam_id: bp.buyparam_id, buyparamvalue: bp.buyparamvalue, buyparamvalue_id: bp.buyparamvalue_id)
         end
         amount += f.number * f.price
       end
+    end
+    if params[:giftdepot_id] && params[:giftdepot_id].to_i > 0
+      giftdepot = Giftdepot.find(params[:giftdepot_id])
+      orderdetail = order.orderdetails.create(product_id: giftdepot.product_id, number: giftdepot.number, price: 0, giftdepot_id: params[:giftdepot_id])
+      if params[:giftbuyparams]
+        params[:giftbuyparams].each do |giftbuyparam|
+          orderdetail.orderdetailparams.create(buyparam: giftbuyparam[:buyparam], buyparam_id: giftbuyparam[:buyparam_id], buyparamvalue: giftbuyparam[:buyparamvalue], buyparamvalue_id: giftbuyparam[:buyparamvalue_id])
+        end
+      end
+      giftdepot.update(usedstatus: 1)
+
     end
 
     order.update(amount: amount)
@@ -152,6 +163,13 @@ class Api::OrdersController < ApplicationController
   def deleteorder
     order = Order.find(params[:orderid])
     if order.paystatus.to_i == 0
+      orderdetails = order.orderdetails
+      orderdetails.each do |orderdetail|
+        if orderdetail.giftdepot_id.to_i > 0
+          giftdepot = Giftdepot.find(orderdetail.giftdepot_id)
+          giftdepot.update(usedstatus: 0)
+        end
+      end
       order.destroy
     end
     return_api('')

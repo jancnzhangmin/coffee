@@ -40,6 +40,8 @@ class Api::WxqueryController < ApplicationController
     upuser = User.find(params[:uid])
     if user.up_id.to_i == 0 && !check_children(user.id, upuser.id) && user.created_at > Time.now - 1.days
       user.update(up_id: upuser.id)
+      Backrun.oldpeople_invitationgift(upuser.id)
+      Backrun.gift_luckdraw_times(upuser.id)
       parent = user.parent
       while parent do
         parent.update(peoplecount: parent.peoplecount.to_i + 1, mancount: parent.mancount.to_i + 1)
@@ -78,6 +80,7 @@ class Api::WxqueryController < ApplicationController
     upuser = User.find_by_openid(params[:res][:share_openid])
     if upuser && user.up_id.to_i == 0 && user.id != upuser.id
       user.update(up_id: upuser.id)
+      Backrun.oldpeople_invitationgift(upuser.id)
       parent = user.parent
       while parent do
         data = {

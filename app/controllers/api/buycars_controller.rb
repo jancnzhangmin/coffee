@@ -94,6 +94,7 @@ class Api::BuycarsController < ApplicationController
     buycars.destroy_all
     Backrun.cal_shoudan(userid, shoudan, chooseproprice, shopid)
     Backrun.cal_signlediscount(userid)
+    Backrun.cal_buyfull(userid)
     buycars = user.buycars
     buycararr = []
     paysum = 0

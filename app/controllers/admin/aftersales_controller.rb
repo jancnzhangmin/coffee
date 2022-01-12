@@ -80,11 +80,50 @@ class Admin::AftersalesController < ApplicationController
   end
 
   def update
+    status = 10000
+    msg = 'OK'
     order = Order.find(params[:id])
     aftersale = order.aftersales.last
     data = JSON.parse(params[:data])
-    aftersale.update(reply: data["reply"])
-    order.update(afterstatus: 0)
-    return_res('')
+    if data["processtype"].include?("退款")
+      refund_params = {
+          out_trade_no: order.ordernumber,
+          out_refund_no: UUIDTools::UUID.timestamp_create.to_s.tr('-','')[0,6].hex.to_s + order.ordernumber,
+          total_fee: (order.amount.to_f * 100).round(0).to_i,
+          refund_fee: (order.amount.to_f * 100).round(0).to_i,
+      }
+      result = WxPay::Service.invoke_refund(refund_params)
+      if result["result_code"]=="SUCCESS"
+        incomes = Income.where(ordernumber: order.ordernumber)
+        incomes.each do |income|
+          income.update(status: 1, summary: income.summary.to_s + ' 退款')
+        end
+      else
+        status = 10001
+        msg = result["err_code_des"]
+      end
+    end
+
+    if status == 10000
+      if data["processtype"].include?("结束订单")
+        if order.deliverstatus.to_i == 0
+          order.deliverstatus = 1
+          order.delivertime = Time.now
+        end
+        if order.receivestatus.to_i == 0
+          order.receivestatus = 1
+          order.receivetime = Time.now
+        end
+        if order.evaluatestatus.to_i == 0
+          order.evaluatestatus = 1
+          order.evaluatetime = Time.now
+        end
+      end
+      aftersale.update(reply: data["reply"])
+      order.afterstatus = 0
+      order.save
+    end
+
+    return_res('',status, msg)
   end
 end

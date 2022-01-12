@@ -607,10 +607,202 @@ class Backrun
     buycars = user.buycars
     signlediscounts = Singlediscount.where('status = ? and begintime <= ? and endtime >= ?', 1, Time.now, Time.now)
     signlediscounts.each do |signlediscount|
-      buycars.each do |buycar|
-        if signlediscount.product_id == buycar.product_id
-          buycar.update(price: signlediscount.discount / 100 * buycar.price, proprice: signlediscount.discount / 100 * buycar.price)
+      if (signlediscount.limitnewpeople.to_i == 1 && user.created_at > signlediscount.newpeopletime) || signlediscount.limitnewpeople.to_i == 0
+        buycars.each do |buycar|
+          if signlediscount.product_id == buycar.product_id && buycars.where(product_id: signlediscount.product_id).sum('number') >= signlediscount.buynumber
+            buycar.proprice = signlediscount.discount / 100 * buycar.price
+            if buycar.activesummary.to_s.size == 0
+              buycar.activesummary = signlediscount.nametag
+            elsif !buycar.activesummary.include?(signlediscount.nametag)
+              buycar.activesummary += ' ' + signlediscount.nametag
+            end
+            buycar.save
+            #buycar.update(proprice: signlediscount.discount / 100 * buycar.price)
+          end
         end
+      end
+    end
+  end
+
+  def self.cal_buyfull(userid)
+    user = User.find(userid)
+    buyfullactives = Buyfullactive.where('status = ? and begintime <= ? and endtime >= ?', 1, Time.now, Time.now)
+    buyfullactives.each do |buyfullactive|
+      buycarnumber = user.buycars.where(producttype: 0, product_id: buyfullactive.product_id).sum('number')
+      buyfullactivedetails = buyfullactive.buyfullactivedetails.order('buynumber desc')
+      buyfullactivedetails.each do |buyfullactivedetail|
+        while buycarnumber >= buyfullactivedetail.buynumber
+          givebuycar = user.buycars.where(product_id: buyfullactivedetail.giveproduct_id, producttype: 1).first
+          if givebuycar
+            givebuycar.number += buyfullactivedetail.givenumber
+            if givebuycar.activesummary.to_s.size == 0
+              givebuycar.activesummary = buyfullactive.nametag
+            elsif !givebuycar.activesummary.include?(buyfullactive.nametag)
+              givebuycar.activesummary += ' ' + buyfullactive.nametag
+            end
+            givebuycar.save
+          else
+            giveproduct = Product.find(buyfullactivedetail.giveproduct_id)
+            user.buycars.create(product_id: buyfullactivedetail.giveproduct_id, number: buyfullactivedetail.givenumber, price: giveproduct.price, proprice: 0, producttype: 1, activesummary: buyfullactive.nametag, cover: giveproduct.cover)
+          end
+          buycarnumber -= buyfullactivedetail.buynumber
+        end
+      end
+    end
+  end
+
+  def self.get_product_summary(product_id, userid) #获取单品活动描述
+    #buyfull 买满送活动 singlediscount 单品折扣活动
+    user = User.find(userid)
+    activearr = []
+    buyfullactives = Buyfullactive.where('product_id = ? and begintime <= ? and endtime >= ? and status = ?', product_id, Time.now, Time.now, 1)
+    buyfullactives.each do |f|
+      buyfullactive_param = {
+          id: f.id,
+          activetype: 'buyfull',
+          activename: f.name,
+          activetag: f.nametag,
+          summary: f.summary
+      }
+      activearr.push buyfullactive_param
+    end
+    singlediscounts = Singlediscount.where('product_id = ? and begintime <= ? and endtime >= ? and status = ?', product_id, Time.now, Time.now, 1)
+    singlediscounts.each do |f|
+      singlediscount_param = {
+          id: f.id,
+          activetype: 'singlediscount',
+          activename: f.name,
+          activetag: f.nametag,
+          summary: f.summary
+      }
+      if f.limitnewpeople.to_i == 1 && user.created_at > f.newpeopletime
+        activearr.push singlediscount_param
+      elsif f.limitnewpeople.to_i == 0
+        activearr.push singlediscount_param
+      end
+    end
+    activearr
+  end
+
+  def self.newpeople_invitationgift(userid) #新人赠送活动
+    user = User.find(userid)
+    invitationgifts = Invitationgift.where('begintime <= ? and endtime >= ? and status = ? and newpeople = ?', Time.now, Time.now, 1, 1)
+    invitationgifts.each do |invitationgift|
+      user.giftdepots.create(
+          product_id: invitationgift.product_id,
+          number: 1,
+          expireday: invitationgift.expireday,
+          deletestatus: 0,
+          usedstatus: 0,
+          appointproduct_id: invitationgift.appointproduct_id,
+          summary: invitationgift.nametag
+      )
+    end
+  end
+
+  def self.oldpeople_invitationgift(userid) #分享人赠送活动
+    user = User.find(userid)
+    invitationgifts = Invitationgift.where('begintime <= ? and endtime >= ? and status = ? and oldpeople = ?', Time.now, Time.now, 1, 1)
+    invitationgifts.each do |invitationgift|
+      user.giftdepots.create(
+          product_id: invitationgift.product_id,
+          number: 1,
+          expireday: invitationgift.expireday,
+          deletestatus: 0,
+          usedstatus: 0,
+          appointproduct_id: invitationgift.appointproduct_id,
+          summary: invitationgift.nametag
+      )
+    end
+  end
+
+  def self.getgiftproduct(userid) #获取赠送商品
+    user = User.find(userid)
+    buycars = user.buycars
+    buycararr = []
+    buycars.each do |buycar|
+      hasbuycar = false
+      buycararr.each do |arr|
+        if arr[:product_id] == buycar.product_id
+          arr[:number] += buycar.number
+          hasbuycar = true
+          break
+        end
+      end
+      if !hasbuycar
+        buycar_param = {
+            product_id: buycar.product_id,
+            number: buycar.number
+        }
+        buycararr.push buycar_param
+      end
+    end
+    giftdepots = user.giftdepots.where('usedstatus <> ?', 1)
+    giftarr = []
+    giftdepots.each do |f|
+      product = Product.find(f.product_id)
+      gift_param = {
+          id: f.id,
+          name: product.name,
+          cover: product.cover,
+          price: product.price,
+          product_id: f.product_id,
+          number: f.number,
+          expireday: f.expireday,
+          deletestatus: f.deletestatus,
+          usedstatus: f.usedstatus,
+          appointproduct_id: f.appointproduct_id,
+          created_at: f.created_at,
+          updated_at: f.updated_at,
+          expiretime: f.created_at + f.expireday.days - Time.now,
+          summary: f.summary
+      }
+      if gift_param[:expiretime] > 0
+        giftarr.push gift_param
+      end
+    end
+    giftarr.sort!{|a,b|a[:expiretime] <=> b[:expiretime]}
+    active_product_ids = get_active_product_ids
+    resultarr = []
+    giftarr.each do |arr|
+      if arr[:appointproduct_id]
+        appointproduct = Appointproduct.find(arr[:appointproduct_id])
+      else
+        appointproduct = Appointproduct.first
+      end
+      appointproductdetails = appointproduct.appointproductdetails.where('product_id not in (?)', active_product_ids)
+      buycararr.each do |buycar|
+        if appointproductdetails.select{|n|buycar[:number] >= n.number && n.product_id == buycar[:product_id]}.size > 0 && arr[:expiretime] > 0
+          if resultarr.select{|n|n[:id] == arr[:id]}.size == 0
+            resultarr.push arr
+          end
+        end
+      end
+    end
+    resultarr
+  end
+
+  def self.get_active_product_ids #获取活动商品id组
+    productids = []
+    singlediscounts = Singlediscount.where('status = ? and begintime <= ? and endtime >= ?', 1, Time.now, Time.now)
+    productids += singlediscounts.map(&:product_id)
+    buyfullactives = Buyfullactive.where('status = ? and begintime <= ? and endtime >= ?', 1, Time.now, Time.now)
+    productids += buyfullactives.map(&:product_id)
+
+    productids.uniq!
+    productids += [0]
+    productids
+  end
+
+  def self.gift_luckdraw_times(userid) #赠送抽奖次数
+    luckdraw = Luckdraw.where('begintime <= ? and endtime >= ? and status = ?', Time.now, Time.now, 1).first
+    if luckdraw
+      user = User.find(userid)
+      luckdrawtime = user.luckdrawtimes.where('begintime <= ? and endtime >= ?', Time.now, Time.now).first
+      if luckdrawtime
+        luckdrawtime.update(times: luckdrawtime.times + 1)
+      else
+        user.luckdrawtimes.create(begintime: luckdraw.begintime, endtime: luckdraw.endtime, systemgive: 0, times: 1)
       end
     end
   end

@@ -11,7 +11,8 @@ class Admin::BuyparamvaluesController < ApplicationController
           name: buyparam.name,
           price: buyparam.price,
           cost: buyparam.cost,
-          corder: buyparam.corder
+          corder: buyparam.corder,
+          suppliername: buyparam.suppliername
       }
       buyparamarr.push buyparam_param
     end
@@ -25,14 +26,14 @@ class Admin::BuyparamvaluesController < ApplicationController
   def create
     data = JSON.parse(params[:data])
     buyparam = Buyparam.find(params[:buyparam_id])
-    buyparam.buyparamvalues.create(name: data["name"], cover: data["cover"], price: data["price"], cost: data["cost"])
+    buyparam.buyparamvalues.create(name: data["name"], cover: data["cover"], price: data["price"], cost: data["cost"], suppliername: data["suppliername"])
     return_res('')
   end
 
   def update
     data = JSON.parse(params[:data])
     buyparamvalue = Buyparamvalue.find(params[:id])
-    buyparamvalue.update(name: data["name"], cover: data["cover"], price: data["price"], cost: data["cost"])
+    buyparamvalue.update(name: data["name"], cover: data["cover"], price: data["price"], cost: data["cost"], suppliername: data["suppliername"])
     return_res('')
   end
 

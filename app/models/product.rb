@@ -11,6 +11,7 @@ class Product < ApplicationRecord
   has_one :hotsale, dependent: :destroy
   has_many :buyparams, dependent: :destroy
   has_many :singlediscounts, dependent: :destroy
+  belongs_to :supplier, optional: true
 
   after_create :create_evaluate
 

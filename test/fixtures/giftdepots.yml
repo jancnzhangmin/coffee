@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user_id: 
+  product_id: 
+  number: 1
+  expireday: 1
+  deletestatus: 1
+  usedstatus: 1
+  appointproduct_id: 
+
+two:
+  user_id: 
+  product_id: 
+  number: 1
+  expireday: 1
+  deletestatus: 1
+  usedstatus: 1
+  appointproduct_id: 

@@ -77,7 +77,8 @@ class Api::ProductdetailsController < ApplicationController
         cover: product.cover,
         onsale: product.onsale.to_i,
         startnumber: startnumber,
-        propriceorgin: product.proprice
+        propriceorgin: product.proprice,
+        active: Backrun.get_product_summary(product.id, user.id)
     }
     return_api(product_param)
   end

@@ -3,7 +3,11 @@ Rails.application.routes.draw do
   namespace :admin do
     resources :settings
     resources :products do
-      resources :productbanners
+      resources :productbanners do
+        collection do
+          post 'sort'
+        end
+      end
       resources :showparams do
         collection do
           post 'sort'
@@ -45,6 +49,7 @@ Rails.application.routes.draw do
         post 'judge_express'
         post 'deletedeliver'
         post 'processinvoice'
+        get 'export_print'
       end
     end
     resources :productexplains
@@ -109,6 +114,23 @@ Rails.application.routes.draw do
     resources :buyfullactives do
       resources :buyfullactivedetails
     end
+    resources :invitationgifts do
+      collection do
+        get 'get_appointproducts'
+      end
+    end
+    resources :appointproducts do
+      resources :appointproductdetails
+    end
+    resources :suppliers
+    resources :luckdraws do
+      resources :luckdrawdetails do
+        collection do
+          post 'sort'
+        end
+      end
+    end
+    resources :notices
   end
 
   namespace :api do
@@ -243,6 +265,21 @@ Rails.application.routes.draw do
     resources :aftersales
     resources :activelists
     resources :activepagelists
+    resources :giftdepots
+    resources :getgiftproduct
+    resources :getinvitationgiftcover
+    resources :getinvitationgiftdetail
+    resources :popmsgs
+    resources :giftdepotcount
+    resources :prize do
+      collection do
+        get 'getprizelist'
+        post 'setprizeindex'
+        get 'getprizepublic'
+        get 'getluckdrawtimes'
+      end
+    end
+    resources :notices
   end
   resources :polldeliver
   resources :mytest do

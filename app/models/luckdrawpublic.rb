@@ -1,0 +1,2 @@
+class Luckdrawpublic < ApplicationRecord
+end

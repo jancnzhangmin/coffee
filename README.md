@@ -33,3 +33,4 @@ Things you may want to cover:
 咖啡豆粉	bean
 咖啡茶	tea
 更多	more
+冷萃    extract

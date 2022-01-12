@@ -13,6 +13,7 @@ gem 'faraday'
 gem 'uuidtools'
 gem 'geokit-rails'
 gem "roo"
+gem 'spreadsheet_architect'
 gem 'faraday'
 gem 'sidekiq'
 gem 'redis-namespace'

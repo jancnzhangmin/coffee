@@ -55,8 +55,11 @@ class Api::ProductlistsController < ApplicationController
       end
       startnumber = f.retailstartnumber.to_i
       startnumber = f.startnumber if shopusers.size > 0
-      buyfullactives = Buyfullactive.where('begintime <= ? and endtime >= ? and status = ? and product_id = ?', Time.now, Time.now, 1, f.id)
-      activetag = buyfullactives.map(&:nametag)
+      activetag = []
+      active = Backrun.get_product_summary(f.id, user.id)
+      if active.size > 0
+        activetag = active.map{|n|n[:activetag]}
+      end
       product_param = {
           id: f.id,
           name: f.name,

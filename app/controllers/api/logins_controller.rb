@@ -23,6 +23,8 @@ class Api::LoginsController < ApplicationController
         user.update(unionid: data["unionid"])
       else
         user = User.create(openid: data["openid"], unionid: data["unionid"])
+        Backrun.newpeople_invitationgift(user.id)
+        Backrun.gift_luckdraw_times(user.id)
       end
       examine = user.examines.last
       if !examine

@@ -16,6 +16,9 @@ class User < ApplicationRecord
   has_many :withdrawals, dependent: :destroy
   has_many :invoicedefs, dependent: :destroy
   has_many :teamorderids, dependent: :destroy
+  has_many :giftdepots, dependent: :destroy
+  has_one :popmsg, dependent: :destroy
+  has_many :luckdrawtimes, dependent: :destroy
 
   after_create :create_uuid
 

@@ -6,14 +6,15 @@ class Api::TeamsController < ApplicationController
     final = 1 if users.last_page? || users.out_of_range?
     userarr = []
     users.each do |f|
+      orders = Order.where('id in (?) and created_at between ? and ?', f.teamorderids.map(&:order_id) + [0], Time.now - 1.years, Time.now)
       user_param = {
           id: f.id,
           headurl: f.headurl.to_s,
           nickname: f.nickname.to_s,
           #salesum: get_year_salesum(f.id).to_s(:currency, unit:''),
-          salesum: f.salesum.to_f.to_s(:currency, unit: ''),
+          salesum: orders.sum('amount').to_s(:currency, unit: ''),
           #salecount: get_year_salecount(f.id),
-          salecount: f.salecount.to_i,
+          salecount: orders.size,
           #peoplecount: get_peoplecount(f.id),
           peoplecount: f.peoplecount.to_i,
           #mancount: get_businecount(f.id, f.id, 'man'),
